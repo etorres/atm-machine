@@ -23,16 +23,16 @@
         <parameter value="-Wunused:params" />
         <parameter value="-Wunused:privates" />
         <parameter value="-java-output-version" />
-        <parameter value="21" />
+        <parameter value="25" />
         <parameter value="-Wsafe-init" />
         <parameter value="-Yexplicit-nulls" />
         <parameter value="-Xfatal-warnings" />
         <parameter value="-Xsemanticdb" />
         <parameter value="-semanticdb-target" />
-        <parameter value="$PROJECT_DIR$/target/scala-3.7.2/test-meta" />
+        <parameter value="$PROJECT_DIR$/target/scala-3.7.4/test-meta" />
       </parameters>
       <plugins>
-        <plugin path="$PROJECT_DIR$/target/scala-3.7.2/compiler_plugins/wartremover_3.7.2-3.4.1.jar" />
+        <plugin path="$PROJECT_DIR$/target/scala-3.7.4/compiler_plugins/wartremover_3.7.4-3.4.3.jar" />
       </plugins>
     </profile>
     <profile name="sbt 3" modules="atm-machine.main">
@@ -55,16 +55,16 @@
         <parameter value="-Wunused:params" />
         <parameter value="-Wunused:privates" />
         <parameter value="-java-output-version" />
-        <parameter value="21" />
+        <parameter value="25" />
         <parameter value="-Wsafe-init" />
         <parameter value="-Yexplicit-nulls" />
         <parameter value="-Xfatal-warnings" />
         <parameter value="-Xsemanticdb" />
         <parameter value="-semanticdb-target" />
-        <parameter value="$PROJECT_DIR$/target/scala-3.7.2/meta" />
+        <parameter value="$PROJECT_DIR$/target/scala-3.7.4/meta" />
       </parameters>
       <plugins>
-        <plugin path="$PROJECT_DIR$/target/scala-3.7.2/compiler_plugins/wartremover_3.7.2-3.4.1.jar" />
+        <plugin path="$PROJECT_DIR$/target/scala-3.7.4/compiler_plugins/wartremover_3.7.4-3.4.3.jar" />
       </plugins>
     </profile>
   </component>

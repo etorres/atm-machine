@@ -3,10 +3,10 @@ ThisBuild / version := "1.0.0"
 ThisBuild / idePackagePrefix := Some("es.eriktorr")
 Global / excludeLintKeys += idePackagePrefix
 
-ThisBuild / scalaVersion := "3.7.2"
+ThisBuild / scalaVersion := "3.7.4"
 
 ThisBuild / semanticdbEnabled := true
-ThisBuild / javacOptions ++= Seq("-source", "21", "-target", "21")
+ThisBuild / javacOptions ++= Seq("-source", "25", "-target", "25")
 
 Global / cancelable := true
 Global / fork := true
@@ -23,7 +23,7 @@ lazy val warts = Warts.unsafe.filter(_ != Wart.DefaultArguments)
 lazy val withBaseSettings: Project => Project = _.settings(
   Compile / doc / sources := Seq(),
   tpolecatDevModeOptions ++= Set(
-    org.typelevel.scalacoptions.ScalacOptions.other("-java-output-version", List("21"), _ => true),
+    org.typelevel.scalacoptions.ScalacOptions.other("-java-output-version", List("25"), _ => true),
     org.typelevel.scalacoptions.ScalacOptions.warnOption("safe-init"),
     org.typelevel.scalacoptions.ScalacOptions.privateOption("explicit-nulls"),
   ),
@@ -59,12 +59,14 @@ lazy val root = (project in file("."))
   .configure(withCatsEffect)
   .settings(
     name := "atm-machine",
+    run / javaOptions += "--enable-native-access=ALL-UNNAMED",
+    Test / javaOptions += "--enable-native-access=ALL-UNNAMED",
     libraryDependencies ++= Seq(
       "com.google.ortools" % "ortools-java" % "9.14.6206",
       "com.monovore" %% "decline" % "2.5.0",
       "com.monovore" %% "decline-effect" % "2.5.0",
-      "io.github.iltotore" %% "iron" % "3.2.0",
-      "io.github.iltotore" %% "iron-cats" % "3.2.0",
+      "io.github.iltotore" %% "iron" % "3.2.1",
+      "io.github.iltotore" %% "iron-cats" % "3.2.1",
       "org.typelevel" %% "log4cats-core" % "2.7.1",
       "org.typelevel" %% "log4cats-noop" % "2.7.1" % Test,
       "org.typelevel" %% "log4cats-slf4j" % "2.7.1",

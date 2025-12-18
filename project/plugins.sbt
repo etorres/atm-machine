@@ -1,7 +1,7 @@
 addDependencyTreePlugin
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.3")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.5")
 addSbtPlugin("com.github.cb372" % "sbt-explicit-dependencies" % "0.3.1")
-addSbtPlugin("org.jetbrains.scala" % "sbt-ide-settings" % "1.1.2")
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.5")
+addSbtPlugin("org.jetbrains.scala" % "sbt-ide-settings" % "1.1.3")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.6")
 addSbtPlugin("org.typelevel" % "sbt-tpolecat" % "0.5.2")
-addSbtPlugin("org.wartremover" % "sbt-wartremover" % "3.4.1")
+addSbtPlugin("org.wartremover" % "sbt-wartremover" % "3.4.3")

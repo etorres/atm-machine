@@ -9,7 +9,7 @@ import cash.CashExtensions.{toCash, toDispensedCash}
 import cats.effect.{IO, Resource}
 import cats.implicits.{catsSyntaxEitherId, showInterpolator, toTraverseOps}
 import cats.mtl.Handle
-import munit.CatsEffectSuite
+import munit.{AnyFixture, CatsEffectSuite}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.noop.NoOpLogger
 
@@ -31,7 +31,7 @@ final class CashDispenserSuite extends CatsEffectSuite:
                 IO.fromEither(error.asLeft)
               .assertEquals(testCase.expected, show"Test case $idx")
 
-  override def munitFixtures = List(cashDispenserFixture)
+  override def munitFixtures: Seq[AnyFixture[?]] = List(cashDispenserFixture)
 
   private lazy val cashDispenserFixture =
     ResourceSuiteLocalFixture(

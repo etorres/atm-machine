@@ -1,5 +1,5 @@
-package es.eriktorr.atm
-package application
+package es.eriktorr
+package atm.application
 
 import com.monovore.decline.Opts
 
