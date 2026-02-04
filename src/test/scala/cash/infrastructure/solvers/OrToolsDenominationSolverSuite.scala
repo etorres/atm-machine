@@ -1,57 +1,57 @@
 package es.eriktorr
-package cash
+package cash.infrastructure.solvers
 
-import cash.Cash.{Availability, Denomination, Quantity}
-import cash.CashDispenser.DispensingError
-import cash.CashDispenserSuite.testCases
-import cash.CashExtensions.{toCash, toDispensedCash}
+import cash.domain.Money.Amount
+import cash.domain.{Availability, Denomination, DenominationSolver, Quantity}
+import cash.infrastructure.solvers.CashExtensions.{toCash, toDispensedCash}
+import cash.infrastructure.solvers.OrToolsDenominationSolverSuite.testCases
 
 import cats.effect.{IO, Resource}
-import cats.implicits.{catsSyntaxEitherId, showInterpolator, toTraverseOps}
+import cats.implicits.*
 import cats.mtl.Handle
 import munit.{AnyFixture, CatsEffectSuite}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.noop.NoOpLogger
 
-final class CashDispenserSuite extends CatsEffectSuite:
+final class OrToolsDenominationSolverSuite extends CatsEffectSuite:
   test("should find the minimum number of notes needed to make up an amount"):
-    IO.delay(cashDispenserFixture())
-      .flatMap: cashDispenser =>
+    IO.delay(denominationSolverFixture())
+      .flatMap: denominationSolver =>
         testCases.traverse:
           case (testCase, idx) =>
             Handle
-              .allow[DispensingError]:
-                cashDispenser
-                  .minimumUnits(
+              .allow[DenominationSolver.Error]:
+                denominationSolver
+                  .calculateMinimumNotes(
                     testCase.amount,
-                    testCase.availabilities,
+                    testCase.inventory,
                   )
-                  .map(_.asRight[DispensingError])
+                  .map(_.asRight[DenominationSolver.Error])
               .rescue: error =>
                 IO.fromEither(error.asLeft)
               .assertEquals(testCase.expected, show"Test case $idx")
 
-  override def munitFixtures: Seq[AnyFixture[?]] = List(cashDispenserFixture)
+  override def munitFixtures: Seq[AnyFixture[?]] = List(denominationSolverFixture)
 
-  private lazy val cashDispenserFixture =
+  private lazy val denominationSolverFixture =
     ResourceSuiteLocalFixture(
-      "cash-dispenser", {
+      "DenominationSolver", {
         given Logger[IO] = NoOpLogger.impl[IO]
-        Resource.pure(CashDispenser.impl[IO](verbose = false))
+        Resource.pure(OrToolsDenominationSolver.apply[IO](verbose = false))
       },
     )
 
-object CashDispenserSuite:
+object OrToolsDenominationSolverSuite:
   final private case class TestCase(
-      availabilities: Map[Denomination, Availability],
-      expected: Either[DispensingError, Map[Denomination, Quantity]],
-      amount: Quantity,
+      inventory: Map[Denomination, Availability],
+      expected: Either[DenominationSolver.Error, Map[Denomination, Quantity]],
+      amount: Amount,
   )
 
   private val testCases =
     List(
       TestCase(
-        availabilities = Map(
+        inventory = Map(
           500 -> 1000,
           200 -> 1000,
           100 -> 1000,
@@ -68,10 +68,10 @@ object CashDispenserSuite:
           10 -> 1,
           2 -> 2,
         ).map(toDispensedCash).asRight,
-        amount = Quantity.applyUnsafe(434),
+        amount = Amount.applyUnsafe(434),
       ),
       TestCase(
-        availabilities = Map(
+        inventory = Map(
           500 -> 2,
           200 -> 3,
           100 -> 5,
@@ -89,10 +89,10 @@ object CashDispenserSuite:
           20 -> 1,
           5 -> 1,
         ).map(toDispensedCash).asRight,
-        amount = Quantity.applyUnsafe(1725),
+        amount = Amount.applyUnsafe(1725),
       ),
       TestCase(
-        availabilities = Map(
+        inventory = Map(
           500 -> 0,
           200 -> 0,
           100 -> 4,
@@ -110,6 +110,6 @@ object CashDispenserSuite:
           10 -> 44,
           5 -> 1,
         ).map(toDispensedCash).asRight,
-        amount = Quantity.applyUnsafe(1825),
+        amount = Amount.applyUnsafe(1825),
       ),
     ).zipWithIndex

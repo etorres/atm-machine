@@ -1,29 +1,27 @@
 package es.eriktorr
-package atm
+package atm.application
 
-import atm.Atm.TellingError
-import atm.AtmSuite.{testCaseGen, TestCase}
-import atm.AtmSuiteRunner.{runWith, AtmSuiteState}
-import cash.Cash
-import cash.Cash.{Denomination, Quantity}
-import cash.CashGenerators.{availabilityGen, cashGen, currencyGen, denominationGen}
+import atm.application.AtmApplicationServiceSuite.{testCaseGen, TestCase}
+import atm.application.AtmApplicationServiceSuiteRunner.{runWith, AtmApplicationServiceState}
+import cash.domain.CashGenerators.{availabilityGen, currencyGen, denominationGen, moneyGen}
+import cash.domain.{Denomination, Money, Quantity}
 
 import cats.effect.IO
-import cats.implicits.{catsSyntaxEitherId, toTraverseOps}
+import cats.implicits.*
 import cats.mtl.Handle
 import munit.{CatsEffectSuite, ScalaCheckEffectSuite}
 import org.scalacheck.Gen
-import org.scalacheck.cats.implicits.genInstances
+import org.scalacheck.cats.implicits.given
 import org.scalacheck.effect.PropF.forAllF
 
-final class AtmSuite extends CatsEffectSuite with ScalaCheckEffectSuite:
+final class AtmApplicationServiceSuite extends CatsEffectSuite with ScalaCheckEffectSuite:
   test("should withdraw an amount of money in the given currency"):
     forAllF(testCaseGen):
-      case TestCase(cash, initialState, expectedFinalState) =>
-        runWith(initialState): atm =>
+      case TestCase(money, initialState, expectedFinalState) =>
+        runWith(initialState): atmApplicationService =>
           Handle
-            .allow[TellingError]:
-              atm.withdraw(cash).map(_.asRight[Unit])
+            .allow[AtmApplicationService.Error]:
+              atmApplicationService.withdraw(money)
             .rescue: error =>
               IO.fromEither(error.asLeft)
         .map:
@@ -31,19 +29,21 @@ final class AtmSuite extends CatsEffectSuite with ScalaCheckEffectSuite:
             assert(result.isRight)
             assertEquals(obtainedFinalState, expectedFinalState)
 
-object AtmSuite:
+object AtmApplicationServiceSuite:
   final private case class TestCase(
-      cash: Cash,
-      initialState: AtmSuiteState,
-      expectedFinalState: AtmSuiteState,
+      money: Money,
+      initialState: AtmApplicationServiceState,
+      expectedFinalState: AtmApplicationServiceState,
   )
 
   private val testCaseGen =
     for
       currency <- currencyGen
-      cash <- cashGen(currency)
+      money <- moneyGen(currency)
 
-      denominations <- Gen.containerOfN[Set, Denomination](7, denominationGen).map(_.toList)
+      denominations <- Gen
+        .containerOfN[Set, Denomination](7, denominationGen)
+        .map(_.toList)
       availabilities <- denominations.traverse: denomination =>
         availabilityGen.map(denomination -> _)
 
@@ -59,15 +59,14 @@ object AtmSuite:
               quantity = Quantity.applyUnsafe(amount)
             yield denomination -> quantity
 
-      lines = removed
-        .sortBy:
-          case (denomination, _) => denomination
-        .map(Atm.toLine)
-
-      initialState = AtmSuiteState.empty
-        .setAmounts(Map((cash.amount, availabilities.toMap) -> removed.toMap))
+      initialState = AtmApplicationServiceState.empty
+        .setInventories(Map((money.amount, availabilities.toMap) -> removed.toMap))
         .setAvailabilities(Map(currency -> availabilities.toMap))
       expectedFinalState = initialState
-        .setLines(lines)
+        .setNotes(List(removed.toMap))
         .setRemoved(List(currency -> removed.toMap))
-    yield TestCase(cash, initialState, expectedFinalState)
+    yield TestCase(
+      money,
+      initialState,
+      expectedFinalState,
+    )

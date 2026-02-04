@@ -1,11 +1,11 @@
 package es.eriktorr
-package cash
+package atm.infrastructure
 
 import cats.effect.std.Console
 
-trait CashPrinter[F[_]]:
+trait LinePrinter[F[_]]:
   def print(line: String): F[Unit]
 
-object CashPrinter:
-  def impl[F[_]: Console]: CashPrinter[F] =
+object LinePrinter:
+  def apply[F[_]: Console]: LinePrinter[F] =
     (line: String) => Console[F].println(line)

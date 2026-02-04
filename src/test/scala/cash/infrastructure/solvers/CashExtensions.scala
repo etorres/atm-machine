@@ -1,10 +1,10 @@
 package es.eriktorr
-package cash
+package cash.infrastructure.solvers
 
-import cash.Cash.{Availability, Denomination, Quantity}
+import cash.domain.{Availability, Denomination, Quantity}
 
 import cats.data.EitherNec
-import cats.implicits.{catsSyntaxTuple2Semigroupal, showInterpolator}
+import cats.implicits.*
 import io.github.iltotore.iron.cats.*
 
 object CashExtensions:

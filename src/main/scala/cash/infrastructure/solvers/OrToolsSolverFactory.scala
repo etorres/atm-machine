@@ -1,7 +1,8 @@
 package es.eriktorr
-package commons
+package cash.infrastructure.solvers
 
 import cats.Show
+import cats.derived.*
 import cats.effect.Sync
 import cats.implicits.*
 import com.google.ortools.Loader
@@ -9,16 +10,38 @@ import com.google.ortools.init.OrToolsVersion
 import com.google.ortools.linearsolver.MPSolver
 import org.typelevel.log4cats.Logger
 
-object OptimizationUtils:
-  def create[F[_]: {Logger, Sync}](
+object OrToolsSolverFactory:
+  /** Build a solver and return it wrapped in `F`.
+    * @param solver
+    *   Solver model.
+    * @param timeLimitSeconds
+    *   Stop after `timeLimitSeconds` seconds and return the best solution found so far.
+    * @param multiCore
+    *   Use multiple cores for faster search.
+    * @param verbose
+    *   Print Google OR-Tools version to logs.
+    * @tparam F
+    *   Type parameter.
+    * @return
+    *   A new solver wrapped in `F`.
+    */
+  def make[F[_]: {Logger, Sync}](
       solver: Solver,
+      multiCore: Boolean = true,
+      timeLimitSeconds: Int = 10,
       verbose: Boolean = false,
   ): F[MPSolver] =
     def createSolver =
       for
         _ <- Sync[F].delay(Loader.loadNativeLibraries())
+        availableCores <- Sync[F].delay:
+          Runtime.getRuntime.availableProcessors()
         solver <- Sync[F].fromOption(
-          Option(MPSolver.createSolver(solver.id)),
+          Option(MPSolver.createSolver(solver.id))
+            .tapEach: solver =>
+              solver.setTimeLimit(timeLimitSeconds * 1_000L)
+              if multiCore && solver.setNumThreads(availableCores) then ()
+            .headOption,
           IllegalStateException(show"Could not create solver $solver"),
         )
       yield solver
@@ -49,8 +72,5 @@ object OptimizationUtils:
       _ <- showVersion
     yield solver
 
-  enum Solver(val id: String):
+  enum Solver(val id: String) derives Show:
     case SCIP extends Solver("SCIP")
-
-  object Solver:
-    given Show[Solver] = Show.show(_.id)
