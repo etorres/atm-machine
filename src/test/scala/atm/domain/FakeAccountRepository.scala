@@ -19,10 +19,22 @@ final class FakeAccountRepository(
       accountId: AccountId,
       amount: BigDecimal,
   ): IO[Unit] =
+    update(accountId, -amount.abs)
+
+  override def credit(
+      accountId: AccountId,
+      amount: BigDecimal,
+  ): IO[Unit] =
+    update(accountId, amount.abs)
+
+  private def update(
+      accountId: AccountId,
+      amount: BigDecimal,
+  ): IO[Unit] =
     stateRef.update: currentState =>
       val currentBalance = currentState.accounts
         .getOrElse(accountId, BigDecimal(0))
-      val updatedBalance = currentBalance - amount
+      val updatedBalance = currentBalance + amount
       currentState.copy(currentState.accounts + (accountId -> updatedBalance))
 
 object FakeAccountRepository:

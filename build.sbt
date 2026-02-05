@@ -73,7 +73,6 @@ lazy val root = (project in file("."))
       "com.monovore" %% "decline-effect" % "2.5.0",
       "io.github.iltotore" %% "iron" % "3.2.3",
       "io.github.iltotore" %% "iron-cats" % "3.2.3" % Test,
-      "io.github.timwspence" %% "cats-stm" % "0.13.5",
       "org.typelevel" %% "log4cats-core" % "2.7.1",
       "org.typelevel" %% "log4cats-noop" % "2.7.1" % Test,
       "org.typelevel" %% "log4cats-slf4j" % "2.7.1",

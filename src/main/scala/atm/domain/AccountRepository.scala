@@ -3,8 +3,8 @@ package atm.domain
 
 import cash.domain.model.AccountId
 
-import cats.effect.{Async, Sync}
 import cats.effect.std.MapRef
+import cats.effect.{Async, Sync}
 import cats.implicits.*
 
 trait AccountRepository[F[_]]:
@@ -13,6 +13,11 @@ trait AccountRepository[F[_]]:
   ): F[BigDecimal]
 
   def debit(
+      accountId: AccountId,
+      amount: BigDecimal,
+  ): F[Unit]
+
+  def credit(
       accountId: AccountId,
       amount: BigDecimal,
   ): F[Unit]
@@ -35,8 +40,20 @@ object AccountRepository:
         accountId: AccountId,
         amount: BigDecimal,
     ): F[Unit] =
+      update(accountId, -amount.abs)
+
+    override def credit(
+        accountId: AccountId,
+        amount: BigDecimal,
+    ): F[Unit] =
+      update(accountId, amount.abs)
+
+    private def update(
+        accountId: AccountId,
+        amount: BigDecimal,
+    ): F[Unit] =
       mapRef(accountId).update: maybeBalance =>
         maybeBalance
           .orElse(Some(BigDecimal(0)))
           .map: currentBalance =>
-            currentBalance - amount
+            currentBalance + amount

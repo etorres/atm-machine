@@ -25,18 +25,17 @@ object AtmApplication
         for
           logger <- Slf4jLogger.create[IO]
           given Logger[IO] = logger
-          accountRepository <- AccountRepository.make[IO]
-          atomicAtmRepository <- AtmRepository
-            .make[IO]
-            .flatMap(AtomicCell[IO].of)
+          atomicRepository <- (
+            AccountRepository.make[IO],
+            AtmRepository.make[IO],
+          ).tupled.flatMap(AtomicCell[IO].of)
           _ <- OrToolsSolverFactory.init[IO](params.verbose)
           denominationSolver = OrToolsDenominationSolver[IO]
           dispenserService = CashDispenserService[IO](denominationSolver)
           linePrinter = LinePrinter[IO]
           physicalDispenser = HardwareDispenserAdapter[IO](linePrinter)
           atmApplicationService = AtmApplicationService[IO](
-            accountRepository,
-            atomicAtmRepository,
+            atomicRepository,
             dispenserService,
             physicalDispenser,
             config.timeout,

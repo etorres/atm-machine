@@ -12,6 +12,7 @@ import cats.effect.std.AtomicCell
 import cats.implicits.*
 import cats.mtl.implicits.given
 import cats.mtl.{Handle, Raise}
+import org.typelevel.log4cats.Logger
 
 import scala.concurrent.duration.{Duration, DurationInt}
 import scala.util.control.NoStackTrace
@@ -23,9 +24,8 @@ trait AtmApplicationService[F[_]]:
   )(using Raise[F, AtmApplicationService.Error]): F[Unit]
 
 object AtmApplicationService:
-  def apply[F[_]: Async](
-      accountRepository: AccountRepository[F],
-      atomicAtmRepository: AtomicCell[F, AtmRepository[F]],
+  def apply[F[_]: {Async, Logger}](
+      atomicRepositories: AtomicCell[F, (AccountRepository[F], AtmRepository[F])],
       dispenserService: CashDispenserService[F],
       physicalDispenser: PhysicalDispenser[F],
       timeout: Duration = 2.seconds,
@@ -35,29 +35,26 @@ object AtmApplicationService:
           accountId: AccountId,
           money: Money,
       )(using Raise[F, AtmApplicationService.Error]): F[Unit] =
-        atomicAtmRepository.get
-          .flatMap: atmRepository =>
+        atomicRepositories.get
+          .flatMap: (accountRepository, atmRepository) =>
             for
-              _ <- ensureSufficientFunds(accountId, money.amount)
+              _ <- accountRepository.ensureSufficientFunds(accountId, money.amount)
               inventory <- atmRepository.getAvailableCashIn(money.currency)
               withdrawal <- calculateWithdrawal(inventory, money)
-              _ <- accountRepository.debit(accountId, money.amount)
-              _ <- atmRepository.decrementInventory(money.currency, withdrawal)
-              _ <- physicalDispenser.dispense(withdrawal)
+              _ <- (accountRepository, atmRepository)
+                .withdrawWithCompensation(
+                  accountId,
+                  money,
+                  withdrawal,
+                )
+              _ <- physicalDispenser
+                .dispense(withdrawal)
+                .handleErrorWith: error =>
+                  Logger[F].error(error)(
+                    show"Hardware failed after debit! Manual intervention required for $accountId",
+                  ) >> Async[F].raiseError(error)
             yield ()
           .timeout(timeout)
-
-      private def ensureSufficientFunds(
-          accountId: AccountId,
-          amount: Money.Amount,
-      )(using Raise[F, AtmApplicationService.Error]) =
-        accountRepository
-          .getBalance(accountId)
-          .map(_ >= amount)
-          .ifM(
-            ifTrue = Async[F].unit,
-            ifFalse = InsufficientFunds.raise[F, Unit],
-          )
 
       private def calculateWithdrawal(
           inventory: Map[Denomination, Availability],
@@ -70,6 +67,36 @@ object AtmApplicationService:
             case DenominationSolver.Error.NotSolved =>
               OutOfMoney.raise[F, Map[Denomination, Quantity]]
     end new
+
+  extension [F[_]: Async](self: AccountRepository[F])
+    private def ensureSufficientFunds(
+        accountId: AccountId,
+        amount: Money.Amount,
+    )(using Raise[F, AtmApplicationService.Error]): F[Unit] =
+      self
+        .getBalance(accountId)
+        .map(_ >= amount)
+        .ifM(
+          ifTrue = Async[F].unit,
+          ifFalse = InsufficientFunds.raise[F, Unit],
+        )
+
+  extension [F[_]: {Async, Logger}](self: (AccountRepository[F], AtmRepository[F]))
+    private def withdrawWithCompensation(
+        accountId: AccountId,
+        money: Money,
+        withdrawal: Map[Denomination, Quantity],
+    ) =
+      val (accountRepository, atmRepository) = self
+      accountRepository
+        .debit(accountId, money.amount)
+        .flatMap: _ =>
+          atmRepository
+            .decrementInventory(money.currency, withdrawal)
+            .handleErrorWith: error =>
+              Logger[F].info(error)(
+                show"Inventory update failed. Triggering refund for $accountId...",
+              ) >> accountRepository.credit(accountId, money.amount)
 
   enum Error(
       val message: String,

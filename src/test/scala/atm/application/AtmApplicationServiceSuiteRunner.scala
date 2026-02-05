@@ -10,6 +10,8 @@ import cash.domain.model.{AccountId, Availability, Denomination, Money, Quantity
 
 import cats.effect.std.AtomicCell
 import cats.effect.{IO, Ref}
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.noop.NoOpLogger
 import squants.market.Currency
 
 object AtmApplicationServiceSuiteRunner:
@@ -67,21 +69,23 @@ object AtmApplicationServiceSuiteRunner:
       atmRepositoryStateRef <- Ref.of[IO, AtmRepositoryState](
         initialState.atmRepositoryState,
       )
+      atomicRepositories <- AtomicCell[IO].of[(AccountRepository[IO], AtmRepository[IO])](
+        FakeAccountRepository(accountRepositoryStateRef),
+        FakeAtmRepository(atmRepositoryStateRef),
+      )
       cashDispenserServiceStateRef <- Ref.of[IO, CashDispenserServiceState](
         initialState.cashDispenserServiceState,
-      )
-      fakeAtomicAtmRepository <- AtomicCell[IO].of[AtmRepository[IO]](
-        FakeAtmRepository(atmRepositoryStateRef),
       )
       physicalDispenserStateRef <- Ref.of[IO, PhysicalDispenserState](
         initialState.physicalDispenserState,
       )
-      atmApplicationService = AtmApplicationService[IO](
-        FakeAccountRepository(accountRepositoryStateRef),
-        fakeAtomicAtmRepository,
-        FakeCashDispenserService(cashDispenserServiceStateRef),
-        FakePhysicalDispenser(physicalDispenserStateRef),
-      )
+      atmApplicationService =
+        given Logger[IO] = NoOpLogger.impl[IO]
+        AtmApplicationService[IO](
+          atomicRepositories,
+          FakeCashDispenserService(cashDispenserServiceStateRef),
+          FakePhysicalDispenser(physicalDispenserStateRef),
+        )
       result <- run(atmApplicationService).attempt
       _ = result match
         case Left(error) => error.printStackTrace()
