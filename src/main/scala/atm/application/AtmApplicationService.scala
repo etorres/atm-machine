@@ -2,13 +2,16 @@ package es.eriktorr
 package atm.application
 
 import atm.application.AtmApplicationService.Error.{InsufficientFunds, OutOfMoney}
+import atm.domain.model.types.TransactionExtensions.*
+import atm.domain.model.types.TransactionState
 import atm.domain.{AccountRepository, AtmRepository, CashDispenserService, PhysicalDispenser}
+import atm.repository.TransactionAuditor
 import cash.domain.DenominationSolver
 import cash.domain.model.*
 
-import cats.effect.Async
+import cats.effect.{Async, Clock}
 import cats.effect.implicits.genTemporalOps
-import cats.effect.std.AtomicCell
+import cats.effect.std.{AtomicCell, UUIDGen}
 import cats.implicits.*
 import cats.mtl.implicits.given
 import cats.mtl.{Handle, Raise}
@@ -24,8 +27,9 @@ trait AtmApplicationService[F[_]]:
   )(using Raise[F, AtmApplicationService.Error]): F[Unit]
 
 object AtmApplicationService:
-  def apply[F[_]: {Async, Logger}](
+  def apply[F[_]: {Async, Clock, Logger, UUIDGen}](
       atomicRepositories: AtomicCell[F, (AccountRepository[F], AtmRepository[F])],
+      auditor: TransactionAuditor[F],
       dispenserService: CashDispenserService[F],
       physicalDispenser: PhysicalDispenser[F],
       timeout: Duration = 2.seconds,
@@ -41,7 +45,7 @@ object AtmApplicationService:
               _ <- accountRepository.ensureSufficientFunds(accountId, money.amount)
               inventory <- atmRepository.getAvailableCashIn(money.currency)
               withdrawal <- calculateWithdrawal(inventory, money)
-              _ <- (accountRepository, atmRepository)
+              _ <- (accountRepository, atmRepository, auditor)
                 .withdrawWithCompensation(
                   accountId,
                   money,
@@ -81,22 +85,41 @@ object AtmApplicationService:
           ifFalse = InsufficientFunds.raise[F, Unit],
         )
 
-  extension [F[_]: {Async, Logger}](self: (AccountRepository[F], AtmRepository[F]))
+  extension [F[_]: {Async, Clock, Logger, UUIDGen}](
+      self: (AccountRepository[F], AtmRepository[F], TransactionAuditor[F])
+  )
     private def withdrawWithCompensation(
         accountId: AccountId,
         money: Money,
         withdrawal: Map[Denomination, Quantity],
-    ) =
-      val (accountRepository, atmRepository) = self
-      accountRepository
-        .debit(accountId, money.amount)
-        .flatMap: _ =>
-          atmRepository
-            .decrementInventory(money.currency, withdrawal)
-            .handleErrorWith: error =>
-              Logger[F].info(error)(
+    ): F[Unit] =
+      val (accountRepository, atmRepository, auditor) = self
+      for
+        txId <- auditor.startTransaction(accountId, money)
+        _ <- accountRepository
+          .debit(accountId, money.amount)
+          .flatTap: _ =>
+            auditor.updateState(txId, TransactionState.Debited)
+        _ <- atmRepository
+          .decrementInventory(money.currency, withdrawal)
+          .handleErrorWith: error =>
+            for
+              _ <- Logger[F].info(error)(
                 show"Inventory update failed. Triggering refund for $accountId...",
-              ) >> accountRepository.credit(accountId, money.amount)
+              )
+              _ <- auditor.updateState(txId, TransactionState.Refunding)
+              _ <-
+                accountRepository
+                  .credit(accountId, money.amount)
+                  .flatTap: _ =>
+                    auditor.updateState(txId, TransactionState.Refunded)
+                  .handleErrorWith: error =>
+                    auditor.updateState(
+                      txId,
+                      TransactionState.ManualInterventionRequired,
+                    ) >> Logger[F].info(error)(show"Manual intervention needed for Tx $txId")
+            yield ()
+      yield ()
 
   enum Error(
       val message: String,

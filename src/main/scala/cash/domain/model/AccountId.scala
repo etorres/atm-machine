@@ -1,7 +1,7 @@
 package es.eriktorr
 package cash.domain.model
 
-import cash.domain.model.types.NonEmptyString
+import types.NonEmptyString
 
 import io.github.iltotore.iron.RefinedSubtype
 

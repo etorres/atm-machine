@@ -35,6 +35,7 @@ lazy val withBaseSettings: Project => Project = _.settings(
   Compile / compile / wartremoverErrors ++= warts,
   Test / compile / wartremoverErrors ++= warts,
   libraryDependencies ++= Seq(
+    "com.47deg" %% "scalacheck-toolbox-datetime" % "0.7.0" % Test,
     "io.chrisdavenport" %% "cats-scalacheck" % "0.3.2" % Test,
     "org.typelevel" %% "munit-cats-effect" % "2.1.0" % Test,
     "org.typelevel" %% "scalacheck-effect-munit" % "2.1.0-RC1" % Test,
@@ -51,11 +52,13 @@ lazy val withBaseSettings: Project => Project = _.settings(
 lazy val withCatsEffect: Project => Project = withBaseSettings.compose(
   _.settings(
     libraryDependencies ++= Seq(
+      "org.typelevel" %% "cats-collections-core" % "0.9.10",
       "org.typelevel" %% "cats-core" % "2.13.0",
       "org.typelevel" %% "cats-effect" % "3.6.3",
       "org.typelevel" %% "cats-effect-kernel" % "3.6.3",
       "org.typelevel" %% "cats-effect-std" % "3.6.3",
       "org.typelevel" %% "cats-mtl" % "1.6.0",
+      "org.typelevel" %% "cats-time" % "0.6.0",
       "org.typelevel" %% "kittens" % "3.5.0",
     ),
   ),

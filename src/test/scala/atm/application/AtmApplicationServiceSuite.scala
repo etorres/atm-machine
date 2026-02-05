@@ -3,6 +3,8 @@ package atm.application
 
 import atm.application.AtmApplicationServiceSuite.{testCaseGen, TestCase}
 import atm.application.AtmApplicationServiceSuiteRunner.{runWith, AtmApplicationServiceState}
+import atm.domain.model.types.{AuditEntry, TransactionState}
+import atm.infrastructure.TemporalGenerators.instantGen
 import cash.domain.model.CashGenerators.*
 import cash.domain.model.{AccountId, Denomination, Money, Quantity}
 
@@ -45,6 +47,9 @@ object AtmApplicationServiceSuite:
       accountId <- accountIdGen
       balance <- Gen.choose(money.amount, 100_000)
 
+      uuid <- Gen.uuid
+      instant <- instantGen
+
       denominations <- Gen
         .containerOfN[Set, Denomination](7, denominationGen)
         .map(_.toList)
@@ -65,10 +70,30 @@ object AtmApplicationServiceSuite:
 
       initialState = AtmApplicationServiceState.empty
         .setAccounts(Map(accountId -> balance))
-        .setInventories(Map((money.amount, availabilities.toMap) -> removed.toMap))
         .setAvailabilities(Map(currency -> availabilities.toMap))
-      expectedFinalState = initialState
+        .setInstants(List(instant))
+        .setInventories(Map((money.amount, availabilities.toMap) -> removed.toMap))
+        .setUUIDs(List(uuid))
+      expectedFinalState = initialState.cleanInstants.clearUUIDs
         .setAccounts(Map(accountId -> (balance - money.amount)))
+        .setAuditEntries(
+          List(
+            AuditEntry(
+              id = uuid,
+              accountId = accountId,
+              money = money,
+              state = TransactionState.Debited,
+              timestamp = instant,
+            ),
+            AuditEntry(
+              id = uuid,
+              accountId = accountId,
+              money = money,
+              state = TransactionState.Started,
+              timestamp = instant,
+            ),
+          ),
+        )
         .setNotes(List(removed.toMap))
         .setRemoved(List(currency -> removed.toMap))
     yield TestCase(
