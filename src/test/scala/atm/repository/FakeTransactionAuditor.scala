@@ -5,6 +5,7 @@ import atm.domain.model.types.{AuditEntry, TransactionState}
 import atm.repository.FakeTransactionAuditor.TransactionAuditorState
 
 import cats.effect.{IO, Ref}
+import cats.implicits.*
 
 import java.util.UUID
 
@@ -19,7 +20,9 @@ final class FakeTransactionAuditor(
         currentState.entries.find(_.id == entry.id) match
           case Some(duplicated) =>
             val action = IO.raiseError(
-              IllegalArgumentException(s"Transaction with id ${entry.id} already exists"),
+              IllegalArgumentException(
+                show"Transaction with id ${entry.id} already exists",
+              ),
             )
             currentState -> action
           case None =>
@@ -39,7 +42,7 @@ final class FakeTransactionAuditor(
             currentState.setAuditEntries(update) -> IO.unit
           case None =>
             val action = IO.raiseError(
-              IllegalArgumentException(s"Transaction with id $id not found"),
+              IllegalArgumentException(show"Transaction with id $id not found"),
             )
             currentState -> action
       (updatedState, action)

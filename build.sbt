@@ -52,11 +52,12 @@ lazy val withBaseSettings: Project => Project = _.settings(
 lazy val withCatsEffect: Project => Project = withBaseSettings.compose(
   _.settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-collections-core" % "0.9.10",
+      "org.typelevel" %% "cats-collections-core" % "0.9.10" % Test,
       "org.typelevel" %% "cats-core" % "2.13.0",
       "org.typelevel" %% "cats-effect" % "3.6.3",
       "org.typelevel" %% "cats-effect-kernel" % "3.6.3",
       "org.typelevel" %% "cats-effect-std" % "3.6.3",
+      "org.typelevel" %% "cats-free" % "2.13.0",
       "org.typelevel" %% "cats-mtl" % "1.6.0",
       "org.typelevel" %% "cats-time" % "0.6.0",
       "org.typelevel" %% "kittens" % "3.5.0",
@@ -72,13 +73,18 @@ lazy val root = (project in file("."))
     Test / javaOptions += "--enable-native-access=ALL-UNNAMED",
     libraryDependencies ++= Seq(
       "com.google.ortools" % "ortools-java" % "9.15.6755",
+      "com.h2database" % "h2" % "2.4.240",
       "com.monovore" %% "decline" % "2.5.0",
       "com.monovore" %% "decline-effect" % "2.5.0",
       "io.github.iltotore" %% "iron" % "3.2.3",
       "io.github.iltotore" %% "iron-cats" % "3.2.3" % Test,
+      "org.tpolecat" %% "doobie-core" % "1.0.0-RC11",
+      "org.tpolecat" %% "doobie-free" % "1.0.0-RC11",
+      "org.tpolecat" %% "doobie-h2" % "1.0.0-RC11",
       "org.typelevel" %% "log4cats-core" % "2.7.1",
       "org.typelevel" %% "log4cats-noop" % "2.7.1" % Test,
       "org.typelevel" %% "log4cats-slf4j" % "2.7.1",
       "org.typelevel" %% "squants" % "1.8.3",
+      "org.tpolecat" %% "typename" % "1.1.0",
     ),
   )

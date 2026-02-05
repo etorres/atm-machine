@@ -4,7 +4,7 @@ package atm.infrastructure
 import atm.domain.PhysicalDispenser
 import cash.domain.model.{Denomination, Quantity}
 
-import cats.effect.kernel.Sync
+import cats.effect.Sync
 import cats.implicits.*
 
 final class HardwareDispenserAdapter[F[_]: Sync](
