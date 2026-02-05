@@ -1,11 +1,10 @@
 package es.eriktorr
-package atm
 
 import atm.application.AtmApplicationService
 import atm.config.{AtmConfig, AtmParams}
-import atm.domain.{AtmRepository, CashDispenserService}
+import atm.domain.{AccountRepository, AtmRepository, CashDispenserService}
 import atm.infrastructure.{HardwareDispenserAdapter, LinePrinter}
-import cash.infrastructure.solvers.OrToolsDenominationSolver
+import cash.infrastructure.solvers.{OrToolsDenominationSolver, OrToolsSolverFactory}
 
 import cats.effect.std.AtomicCell
 import cats.effect.{ExitCode, IO}
@@ -15,7 +14,7 @@ import com.monovore.decline.effect.CommandIOApp
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
-object AtmApp
+object AtmApplication
     extends CommandIOApp(
       name = "atm-machine",
       header = "ATM Machine",
@@ -26,14 +25,17 @@ object AtmApp
         for
           logger <- Slf4jLogger.create[IO]
           given Logger[IO] = logger
+          accountRepository <- AccountRepository.make[IO]
           atomicAtmRepository <- AtmRepository
             .make[IO]
             .flatMap(AtomicCell[IO].of)
-          denominationSolver = OrToolsDenominationSolver[IO](params.verbose)
+          _ <- OrToolsSolverFactory.init[IO](params.verbose)
+          denominationSolver = OrToolsDenominationSolver[IO]
           dispenserService = CashDispenserService[IO](denominationSolver)
           linePrinter = LinePrinter[IO]
           physicalDispenser = HardwareDispenserAdapter[IO](linePrinter)
           atmApplicationService = AtmApplicationService[IO](
+            accountRepository,
             atomicAtmRepository,
             dispenserService,
             physicalDispenser,

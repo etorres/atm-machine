@@ -1,17 +1,12 @@
 package es.eriktorr
 package atm.application
 
+import atm.domain.FakeAccountRepository.AccountRepositoryState
 import atm.domain.FakeAtmRepository.AtmRepositoryState
 import atm.domain.FakeCashDispenserService.CashDispenserServiceState
 import atm.domain.FakePhysicalDispenser.PhysicalDispenserState
-import atm.domain.{
-  AtmRepository,
-  FakeAtmRepository,
-  FakeCashDispenserService,
-  FakePhysicalDispenser,
-}
-import cash.domain.Money.Amount
-import cash.domain.{Availability, Denomination, Quantity}
+import atm.domain.*
+import cash.domain.model.{AccountId, Availability, Denomination, Money, Quantity}
 
 import cats.effect.std.AtomicCell
 import cats.effect.{IO, Ref}
@@ -19,10 +14,14 @@ import squants.market.Currency
 
 object AtmApplicationServiceSuiteRunner:
   final case class AtmApplicationServiceState(
+      accountRepositoryState: AccountRepositoryState,
       atmRepositoryState: AtmRepositoryState,
       cashDispenserServiceState: CashDispenserServiceState,
       physicalDispenserState: PhysicalDispenserState,
   ):
+    def setAccounts(accounts: Map[AccountId, BigDecimal]): AtmApplicationServiceState =
+      copy(accountRepositoryState = accountRepositoryState.setAccounts(accounts))
+
     def setAvailabilities(
         availabilities: Map[Currency, Map[Denomination, Availability]],
     ): AtmApplicationServiceState =
@@ -34,7 +33,10 @@ object AtmApplicationServiceSuiteRunner:
       copy(atmRepositoryState = atmRepositoryState.setRemoved(removed))
 
     def setInventories(
-        inventories: Map[(Amount, Map[Denomination, Availability]), Map[Denomination, Quantity]],
+        inventories: Map[
+          (Money.Amount, Map[Denomination, Availability]),
+          Map[Denomination, Quantity],
+        ],
     ): AtmApplicationServiceState =
       copy(cashDispenserServiceState = cashDispenserServiceState.setInventories(inventories))
 
@@ -47,6 +49,7 @@ object AtmApplicationServiceSuiteRunner:
   object AtmApplicationServiceState:
     val empty: AtmApplicationServiceState =
       AtmApplicationServiceState(
+        AccountRepositoryState.empty,
         AtmRepositoryState.empty,
         CashDispenserServiceState.empty,
         PhysicalDispenserState.empty,
@@ -58,6 +61,9 @@ object AtmApplicationServiceSuiteRunner:
       run: AtmApplicationService[IO] => IO[A],
   ): IO[(Either[Throwable, A], AtmApplicationServiceState)] =
     for
+      accountRepositoryStateRef <- Ref.of[IO, AccountRepositoryState](
+        initialState.accountRepositoryState,
+      )
       atmRepositoryStateRef <- Ref.of[IO, AtmRepositoryState](
         initialState.atmRepositoryState,
       )
@@ -71,6 +77,7 @@ object AtmApplicationServiceSuiteRunner:
         initialState.physicalDispenserState,
       )
       atmApplicationService = AtmApplicationService[IO](
+        FakeAccountRepository(accountRepositoryStateRef),
         fakeAtomicAtmRepository,
         FakeCashDispenserService(cashDispenserServiceStateRef),
         FakePhysicalDispenser(physicalDispenserStateRef),
@@ -79,10 +86,12 @@ object AtmApplicationServiceSuiteRunner:
       _ = result match
         case Left(error) => error.printStackTrace()
         case _ => ()
+      finalAccountRepositoryState <- accountRepositoryStateRef.get
       finalAtmRepositoryState <- atmRepositoryStateRef.get
       finalCashDispenserServiceState <- cashDispenserServiceStateRef.get
       finalPhysicalDispenserState <- physicalDispenserStateRef.get
       finalState = initialState.copy(
+        accountRepositoryState = finalAccountRepositoryState,
         atmRepositoryState = finalAtmRepositoryState,
         cashDispenserServiceState = finalCashDispenserServiceState,
         physicalDispenserState = finalPhysicalDispenserState,

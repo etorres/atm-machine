@@ -2,7 +2,7 @@ package es.eriktorr
 package atm.infrastructure
 
 import atm.domain.PhysicalDispenser
-import cash.domain.{Denomination, Quantity}
+import cash.domain.model.{Denomination, Quantity}
 
 import cats.effect.kernel.Sync
 import cats.implicits.*

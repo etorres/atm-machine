@@ -1,5 +1,5 @@
 package es.eriktorr
-package cash.domain
+package cash.domain.model
 
 import io.github.iltotore.iron.RefinedSubtype
 import io.github.iltotore.iron.constraint.numeric.Positive0

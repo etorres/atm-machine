@@ -3,8 +3,8 @@ package atm.infrastructure
 
 import atm.infrastructure.FakeLinePrinter.LinePrinterState
 import atm.infrastructure.HardwareDispenserAdapterSuite.{testCaseGen, TestCase}
-import cash.domain.CashGenerators.{denominationGen, quantityGen}
-import cash.domain.{Denomination, Quantity}
+import cash.domain.model.CashGenerators.{denominationGen, quantityGen}
+import cash.domain.model.{Denomination, Quantity}
 
 import cats.effect.{IO, Ref, Resource}
 import cats.implicits.*

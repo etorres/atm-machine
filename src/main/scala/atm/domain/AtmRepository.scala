@@ -1,7 +1,7 @@
 package es.eriktorr
 package atm.domain
 
-import cash.domain.{Availability, Denomination, Quantity}
+import cash.domain.model.{Availability, Denomination, Quantity}
 
 import cats.effect.std.MapRef
 import cats.effect.{Async, Sync}
@@ -50,11 +50,3 @@ object AtmRepository:
                 availability - availabilitySubtrahend,
               )
             denomination -> Availability.applyUnsafe(newAvailability)
-
-  object InMemory:
-    final case class AtmRepositoryState(
-        availabilities: Map[Currency, Map[Denomination, Availability]],
-    )
-
-    object AtmRepositoryState:
-      val empty: AtmRepositoryState = AtmRepositoryState(Map.empty)

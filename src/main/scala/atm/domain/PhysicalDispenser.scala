@@ -1,7 +1,7 @@
 package es.eriktorr
 package atm.domain
 
-import cash.domain.{Denomination, Quantity}
+import cash.domain.model.{Denomination, Quantity}
 
 trait PhysicalDispenser[F[_]]:
   def dispense(

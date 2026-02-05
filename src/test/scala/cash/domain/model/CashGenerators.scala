@@ -1,7 +1,5 @@
 package es.eriktorr
-package cash.domain
-
-import cash.domain.Money.Amount
+package cash.domain.model
 
 import cats.implicits.*
 import org.scalacheck.Gen
@@ -9,8 +7,14 @@ import org.scalacheck.cats.implicits.given
 import squants.market.{defaultCurrencySet, Currency}
 
 object CashGenerators:
+  val accountIdGen: Gen[AccountId] =
+    for
+      size <- Gen.choose(3, 12)
+      accountId <- Gen.stringOfN(size, Gen.alphaNumChar)
+    yield AccountId.applyUnsafe(accountId)
+
   private val amountGen =
-    Gen.choose(1, 1000).map(Amount.applyUnsafe)
+    Gen.choose(1, 1000).map(Money.Amount.applyUnsafe)
 
   val availabilityGen: Gen[Availability] =
     Gen.choose(0, 1000).map(Availability.applyUnsafe)

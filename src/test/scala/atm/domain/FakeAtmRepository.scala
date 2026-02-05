@@ -2,7 +2,7 @@ package es.eriktorr
 package atm.domain
 
 import atm.domain.FakeAtmRepository.AtmRepositoryState
-import cash.domain.{Availability, Denomination, Quantity}
+import cash.domain.model.{Availability, Denomination, Quantity}
 
 import cats.effect.{IO, Ref}
 import squants.market.Currency

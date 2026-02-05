@@ -1,27 +1,24 @@
 package es.eriktorr
 package cash.infrastructure.solvers
 
-import cash.domain.Money.Amount
-import cash.domain.{Availability, Denomination, DenominationSolver, Quantity}
+import cash.domain.DenominationSolver
+import cash.domain.model.{Availability, Denomination, Money, Quantity}
 
 import cats.effect.Async
 import cats.implicits.*
 import cats.mtl.Raise
 import cats.mtl.implicits.given
 import com.google.ortools.linearsolver.MPSolver
-import org.typelevel.log4cats.Logger
 
 import scala.util.chaining.scalaUtilChainingOps
 
-final class OrToolsDenominationSolver[F[_]: {Async, Logger}](
-    verbose: Boolean,
-) extends DenominationSolver[F]:
+final class OrToolsDenominationSolver[F[_]: Async] extends DenominationSolver[F]:
   override def calculateMinimumNotes(
-      targetAmount: Amount,
+      targetAmount: Money.Amount,
       inventory: Map[Denomination, Availability],
   )(using Raise[F, DenominationSolver.Error]): F[Map[Denomination, Quantity]] =
     OrToolsSolverFactory
-      .make[F](OrToolsSolverFactory.Solver.SCIP, verbose)
+      .make[F](OrToolsSolverFactory.Solver.SCIP)
       .flatMap: solver =>
         solve(
           amount = targetAmount,
@@ -79,3 +76,7 @@ final class OrToolsDenominationSolver[F[_]: {Async, Logger}](
           ifFalse = DenominationSolver.Error.NotSolved.raise[F, Map[Denomination, Quantity]],
         )
   end solve
+
+object OrToolsDenominationSolver:
+  def apply[F[_]: Async]: OrToolsDenominationSolver[F] =
+    new OrToolsDenominationSolver[F]()

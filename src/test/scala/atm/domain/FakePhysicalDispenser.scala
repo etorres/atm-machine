@@ -2,7 +2,7 @@ package es.eriktorr
 package atm.domain
 
 import atm.domain.FakePhysicalDispenser.PhysicalDispenserState
-import cash.domain.{Denomination, Quantity}
+import cash.domain.model.{Denomination, Quantity}
 
 import cats.effect.{IO, Ref}
 

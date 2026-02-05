@@ -1,7 +1,7 @@
 package es.eriktorr
 package cash.domain
 
-import cash.domain.Money.Amount
+import cash.domain.model.{Availability, Denomination, Money, Quantity}
 
 import cats.mtl.Raise
 
@@ -9,7 +9,7 @@ import scala.util.control.NoStackTrace
 
 trait DenominationSolver[F[_]]:
   def calculateMinimumNotes(
-      targetAmount: Amount,
+      targetAmount: Money.Amount,
       inventory: Map[Denomination, Availability],
   )(using Raise[F, DenominationSolver.Error]): F[Map[Denomination, Quantity]]
 

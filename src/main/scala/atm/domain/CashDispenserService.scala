@@ -1,14 +1,14 @@
 package es.eriktorr
 package atm.domain
 
-import cash.domain.*
-import cash.domain.Money.Amount
+import cash.domain.DenominationSolver
+import cash.domain.model.*
 
 import cats.mtl.Raise
 
 trait CashDispenserService[F[_]]:
   def calculateWithdrawal(
-      amount: Amount,
+      amount: Money.Amount,
       inventory: Map[Denomination, Availability],
   )(using Raise[F, DenominationSolver.Error]): F[Map[Denomination, Quantity]]
 
@@ -18,7 +18,7 @@ object CashDispenserService:
   ): CashDispenserService[F] =
     new CashDispenserService[F]:
       override def calculateWithdrawal(
-          amount: Amount,
+          amount: Money.Amount,
           inventory: Map[Denomination, Availability],
       )(using Raise[F, DenominationSolver.Error]): F[Map[Denomination, Quantity]] =
         denominationSolver.calculateMinimumNotes(amount, inventory)

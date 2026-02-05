@@ -1,1 +1,2 @@
 -J-XX:TrimNativeHeapInterval=1000
+-J-Xshare:on

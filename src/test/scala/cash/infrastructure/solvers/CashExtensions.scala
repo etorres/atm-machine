@@ -1,7 +1,7 @@
 package es.eriktorr
 package cash.infrastructure.solvers
 
-import cash.domain.{Availability, Denomination, Quantity}
+import cash.domain.model.{Availability, Denomination, Quantity}
 
 import cats.data.EitherNec
 import cats.implicits.*

@@ -3,8 +3,8 @@ package atm.application
 
 import atm.application.AtmApplicationServiceSuite.{testCaseGen, TestCase}
 import atm.application.AtmApplicationServiceSuiteRunner.{runWith, AtmApplicationServiceState}
-import cash.domain.CashGenerators.{availabilityGen, currencyGen, denominationGen, moneyGen}
-import cash.domain.{Denomination, Money, Quantity}
+import cash.domain.model.CashGenerators.*
+import cash.domain.model.{AccountId, Denomination, Money, Quantity}
 
 import cats.effect.IO
 import cats.implicits.*
@@ -17,11 +17,11 @@ import org.scalacheck.effect.PropF.forAllF
 final class AtmApplicationServiceSuite extends CatsEffectSuite with ScalaCheckEffectSuite:
   test("should withdraw an amount of money in the given currency"):
     forAllF(testCaseGen):
-      case TestCase(money, initialState, expectedFinalState) =>
+      case TestCase(accountId, money, initialState, expectedFinalState) =>
         runWith(initialState): atmApplicationService =>
           Handle
             .allow[AtmApplicationService.Error]:
-              atmApplicationService.withdraw(money)
+              atmApplicationService.withdraw(accountId, money)
             .rescue: error =>
               IO.fromEither(error.asLeft)
         .map:
@@ -31,6 +31,7 @@ final class AtmApplicationServiceSuite extends CatsEffectSuite with ScalaCheckEf
 
 object AtmApplicationServiceSuite:
   final private case class TestCase(
+      accountId: AccountId,
       money: Money,
       initialState: AtmApplicationServiceState,
       expectedFinalState: AtmApplicationServiceState,
@@ -40,6 +41,9 @@ object AtmApplicationServiceSuite:
     for
       currency <- currencyGen
       money <- moneyGen(currency)
+
+      accountId <- accountIdGen
+      balance <- Gen.choose(money.amount, 100_000)
 
       denominations <- Gen
         .containerOfN[Set, Denomination](7, denominationGen)
@@ -60,12 +64,15 @@ object AtmApplicationServiceSuite:
             yield denomination -> quantity
 
       initialState = AtmApplicationServiceState.empty
+        .setAccounts(Map(accountId -> balance))
         .setInventories(Map((money.amount, availabilities.toMap) -> removed.toMap))
         .setAvailabilities(Map(currency -> availabilities.toMap))
       expectedFinalState = initialState
+        .setAccounts(Map(accountId -> (balance - money.amount)))
         .setNotes(List(removed.toMap))
         .setRemoved(List(currency -> removed.toMap))
     yield TestCase(
+      accountId,
       money,
       initialState,
       expectedFinalState,

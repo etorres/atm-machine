@@ -1,8 +1,8 @@
 package es.eriktorr
 package cash.infrastructure.solvers
 
-import cash.domain.Money.Amount
-import cash.domain.{Availability, Denomination, DenominationSolver, Quantity}
+import cash.domain.DenominationSolver
+import cash.domain.model.{Availability, Denomination, Money, Quantity}
 import cash.infrastructure.solvers.CashExtensions.{toCash, toDispensedCash}
 import cash.infrastructure.solvers.OrToolsDenominationSolverSuite.testCases
 
@@ -12,6 +12,8 @@ import cats.mtl.Handle
 import munit.{AnyFixture, CatsEffectSuite}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.noop.NoOpLogger
+
+import scala.concurrent.duration.{Duration, DurationInt}
 
 final class OrToolsDenominationSolverSuite extends CatsEffectSuite:
   test("should find the minimum number of notes needed to make up an amount"):
@@ -33,11 +35,17 @@ final class OrToolsDenominationSolverSuite extends CatsEffectSuite:
 
   override def munitFixtures: Seq[AnyFixture[?]] = List(denominationSolverFixture)
 
+  override def munitIOTimeout: Duration = 40.seconds
+
   private lazy val denominationSolverFixture =
     ResourceSuiteLocalFixture(
       "DenominationSolver", {
         given Logger[IO] = NoOpLogger.impl[IO]
-        Resource.pure(OrToolsDenominationSolver.apply[IO](verbose = false))
+        Resource.make(
+          OrToolsSolverFactory
+            .init[IO](verbose = false)
+            .as(OrToolsDenominationSolver[IO]),
+        )(_ => IO.unit)
       },
     )
 
@@ -45,7 +53,7 @@ object OrToolsDenominationSolverSuite:
   final private case class TestCase(
       inventory: Map[Denomination, Availability],
       expected: Either[DenominationSolver.Error, Map[Denomination, Quantity]],
-      amount: Amount,
+      amount: Money.Amount,
   )
 
   private val testCases =
@@ -68,7 +76,7 @@ object OrToolsDenominationSolverSuite:
           10 -> 1,
           2 -> 2,
         ).map(toDispensedCash).asRight,
-        amount = Amount.applyUnsafe(434),
+        amount = Money.Amount.applyUnsafe(434),
       ),
       TestCase(
         inventory = Map(
@@ -89,7 +97,7 @@ object OrToolsDenominationSolverSuite:
           20 -> 1,
           5 -> 1,
         ).map(toDispensedCash).asRight,
-        amount = Amount.applyUnsafe(1725),
+        amount = Money.Amount.applyUnsafe(1725),
       ),
       TestCase(
         inventory = Map(
@@ -110,6 +118,6 @@ object OrToolsDenominationSolverSuite:
           10 -> 44,
           5 -> 1,
         ).map(toDispensedCash).asRight,
-        amount = Amount.applyUnsafe(1825),
+        amount = Money.Amount.applyUnsafe(1825),
       ),
     ).zipWithIndex
