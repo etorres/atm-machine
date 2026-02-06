@@ -23,7 +23,7 @@ final class AtmApplicationServiceSuite extends CatsEffectSuite with ScalaCheckEf
       case TestCase(accountId, money, initialState, expectedFinalState) =>
         runWith(initialState): atmApplicationService =>
           Handle
-            .allow[AtmApplicationService.Error]:
+            .allow[AtmApplicationService.DispenseError]:
               atmApplicationService.withdraw(accountId, money)
             .rescue: error =>
               IO.fromEither(error.asLeft)

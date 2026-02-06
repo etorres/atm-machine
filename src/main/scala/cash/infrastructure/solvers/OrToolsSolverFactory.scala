@@ -28,7 +28,7 @@ object OrToolsSolverFactory:
       verbose: Boolean = false,
   ): F[Unit] =
     def loadNativeLibraries =
-      Sync[F].delay(Loader.loadNativeLibraries())
+      Sync[F].blocking(Loader.loadNativeLibraries())
 
     def showVersion =
       Sync[F]

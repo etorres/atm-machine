@@ -11,7 +11,7 @@ An ATM programming kata is a practice exercise designed to help developers impro
   * ~~The key of the `audit_log` table should include the state.~~
   * Migrate from memory to local sink.
 * ~~Test the transaction auditor.~~
-* Create the UI and move the decisions to the UI.
+* ~~Create the UI and move the decisions to the UI.~~
 * Test edge cases and concurrency:
   * Property-based test 100 concurrent withdrawals.
   * Catch exceptions.

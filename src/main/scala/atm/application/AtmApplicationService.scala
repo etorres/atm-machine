@@ -1,7 +1,8 @@
 package es.eriktorr
 package atm.application
 
-import atm.application.AtmApplicationService.Error.{InsufficientFunds, OutOfMoney}
+import atm.application.AtmApplicationService.DispenseError
+import atm.application.AtmApplicationService.DispenseError.{InsufficientCash, InsufficientFunds}
 import atm.domain.model.types.TransactionState
 import atm.domain.{AccountRepository, AtmRepository, CashDispenserService, PhysicalDispenser}
 import atm.repository.TransactionAuditor
@@ -23,7 +24,7 @@ trait AtmApplicationService[F[_]]:
   def withdraw(
       accountId: AccountId,
       money: Money,
-  )(using Raise[F, AtmApplicationService.Error]): F[Unit]
+  )(using Raise[F, DispenseError]): F[Unit]
 
 object AtmApplicationService:
   def apply[F[_]: {Async, Clock, Logger, UUIDGen}](
@@ -37,7 +38,7 @@ object AtmApplicationService:
       override def withdraw(
           accountId: AccountId,
           money: Money,
-      )(using Raise[F, AtmApplicationService.Error]): F[Unit] =
+      )(using Raise[F, AtmApplicationService.DispenseError]): F[Unit] =
         atomicRepositories.get
           .flatMap: (accountRepository, atmRepository) =>
             for
@@ -62,20 +63,23 @@ object AtmApplicationService:
       private def calculateWithdrawal(
           inventory: Map[Denomination, Availability],
           money: Money,
-      )(using Raise[F, AtmApplicationService.Error]) =
+      )(using Raise[F, AtmApplicationService.DispenseError]) =
         Handle
           .allow[DenominationSolver.Error]:
             dispenserService.calculateWithdrawal(money.amount, inventory)
           .rescue:
             case DenominationSolver.Error.NotSolved =>
-              OutOfMoney.raise[F, Map[Denomination, Quantity]]
+              val availableDenominations =
+                inventory.filter(_._2 > 0).keySet
+              InsufficientCash(availableDenominations)
+                .raise[F, Map[Denomination, Quantity]]
     end new
 
   extension [F[_]: Async](self: AccountRepository[F])
     private def ensureSufficientFunds(
         accountId: AccountId,
         amount: Money.Amount,
-    )(using Raise[F, AtmApplicationService.Error]): F[Unit] =
+    )(using Raise[F, AtmApplicationService.DispenseError]): F[Unit] =
       self
         .getBalance(accountId)
         .map(_ >= amount)
@@ -120,12 +124,13 @@ object AtmApplicationService:
             yield ()
       yield ()
 
-  enum Error(
-      val message: String,
-  ) extends RuntimeException(message)
-      with NoStackTrace:
-    case InsufficientFunds extends Error("Insufficient funds in account")
-    case OutOfMoney
-        extends Error(
-          "This machine does not have enough money, please go to the nearest ATM",
-        )
+  sealed abstract class DispenseError(message: String)
+      extends RuntimeException(message)
+      with NoStackTrace
+
+  object DispenseError:
+    case class InsufficientCash(
+        availableDenominations: Set[Denomination],
+    ) extends DispenseError("Out of money")
+
+    case object InsufficientFunds extends DispenseError("Insufficient funds in account")
