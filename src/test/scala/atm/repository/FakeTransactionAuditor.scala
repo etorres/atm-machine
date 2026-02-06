@@ -7,6 +7,7 @@ import atm.repository.FakeTransactionAuditor.TransactionAuditorState
 import cats.effect.{IO, Ref}
 import cats.implicits.*
 
+import java.time.Instant
 import java.util.UUID
 
 final class FakeTransactionAuditor(
@@ -33,12 +34,13 @@ final class FakeTransactionAuditor(
   override def updateState(
       id: UUID,
       newState: TransactionState,
+      at: Instant,
   ): IO[Unit] =
     stateRef.flatModify: currentState =>
       val (updatedState, action) =
         currentState.entries.find(_.id == id) match
           case Some(entry) =>
-            val update = entry.copy(state = newState) :: currentState.entries
+            val update = entry.copy(state = newState, timestamp = at) :: currentState.entries
             currentState.setAuditEntries(update) -> IO.unit
           case None =>
             val action = IO.raiseError(

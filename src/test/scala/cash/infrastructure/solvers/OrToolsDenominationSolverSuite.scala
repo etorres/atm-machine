@@ -44,7 +44,7 @@ final class OrToolsDenominationSolverSuite extends CatsEffectSuite:
         Resource.make(
           OrToolsSolverFactory
             .init[IO](verbose = false)
-            .as(OrToolsDenominationSolver[IO]),
+            .as(OrToolsDenominationSolver[IO]()),
         )(_ => IO.unit)
       },
     )

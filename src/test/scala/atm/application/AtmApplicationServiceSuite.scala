@@ -4,10 +4,11 @@ package atm.application
 import atm.application.AtmApplicationServiceSuite.{testCaseGen, TestCase}
 import atm.application.AtmApplicationServiceSuiteRunner.{runWith, AtmApplicationServiceState}
 import atm.domain.model.types.{AuditEntry, TransactionState}
-import atm.infrastructure.TemporalGenerators.instantGen
+import atm.infrastructure.TemporalGenerators.{instantGen, withinInstantRange}
 import cash.domain.model.CashGenerators.*
 import cash.domain.model.{AccountId, Denomination, Money, Quantity}
 
+import cats.collections.Range
 import cats.effect.IO
 import cats.implicits.*
 import cats.mtl.Handle
@@ -48,11 +49,15 @@ object AtmApplicationServiceSuite:
       balance <- Gen.choose(money.amount, 100_000)
 
       uuid <- Gen.uuid
-      instant <- instantGen
+      startInstant <- instantGen
+      debitInstant <- withinInstantRange(
+        Range(startInstant.plusSeconds(1), startInstant.plusSeconds(60)),
+      )
 
-      denominations <- Gen
-        .containerOfN[Set, Denomination](7, denominationGen)
-        .map(_.toList)
+      denominations <-
+        Gen
+          .containerOfN[Set, Denomination](7, denominationGen)
+          .map(_.toList)
       availabilities <- denominations.traverse: denomination =>
         availabilityGen.map(denomination -> _)
 
@@ -71,7 +76,7 @@ object AtmApplicationServiceSuite:
       initialState = AtmApplicationServiceState.empty
         .setAccounts(Map(accountId -> balance))
         .setAvailabilities(Map(currency -> availabilities.toMap))
-        .setInstants(List(instant))
+        .setInstants(List(startInstant, debitInstant))
         .setInventories(Map((money.amount, availabilities.toMap) -> removed.toMap))
         .setUUIDs(List(uuid))
       expectedFinalState = initialState.cleanInstants.clearUUIDs
@@ -83,14 +88,14 @@ object AtmApplicationServiceSuite:
               accountId = accountId,
               money = money,
               state = TransactionState.Debited,
-              timestamp = instant,
+              timestamp = debitInstant,
             ),
             AuditEntry(
               id = uuid,
               accountId = accountId,
               money = money,
               state = TransactionState.Started,
-              timestamp = instant,
+              timestamp = startInstant,
             ),
           ),
         )

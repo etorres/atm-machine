@@ -47,8 +47,8 @@ object OrToolsSolverFactory:
     *   Solver model.
     * @param timeLimitSeconds
     *   Stop after `timeLimitSeconds` seconds and return the best solution found so far.
-    * @param multiCore
-    *   Use multiple cores for faster search.
+    * @param numProcessors
+    *   Use multiple processors (threads, cores) for faster search.
     * @tparam F
     *   Type parameter.
     * @return
@@ -56,22 +56,18 @@ object OrToolsSolverFactory:
     */
   def make[F[_]: Sync](
       solver: Solver,
-      multiCore: Boolean = true,
+      numProcessors: Int = 1,
       timeLimitSeconds: Int = 10,
   ): F[MPSolver] =
     def createSolver =
-      for
-        availableCores <- Sync[F].delay:
-          Runtime.getRuntime.availableProcessors()
-        solver <- Sync[F].fromOption(
-          Option(MPSolver.createSolver(solver.id))
-            .tapEach: solver =>
-              solver.setTimeLimit(timeLimitSeconds * 1_000L)
-              if multiCore && solver.setNumThreads(availableCores) then ()
-            .headOption,
-          IllegalStateException(show"Could not create solver $solver"),
-        )
-      yield solver
+      Sync[F].fromOption(
+        Option(MPSolver.createSolver(solver.id))
+          .tapEach: solver =>
+            solver.setTimeLimit(timeLimitSeconds * 1_000L)
+            solver.setNumThreads(numProcessors)
+          .headOption,
+        IllegalStateException(show"Could not create solver $solver"),
+      )
 
     def clear(solver: MPSolver): F[Unit] =
       for

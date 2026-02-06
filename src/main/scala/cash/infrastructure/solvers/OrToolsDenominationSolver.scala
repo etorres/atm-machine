@@ -12,13 +12,15 @@ import com.google.ortools.linearsolver.MPSolver
 
 import scala.util.chaining.scalaUtilChainingOps
 
-final class OrToolsDenominationSolver[F[_]: Async] extends DenominationSolver[F]:
+final class OrToolsDenominationSolver[F[_]: Async](
+    numProcessors: Int,
+) extends DenominationSolver[F]:
   override def calculateMinimumNotes(
       targetAmount: Money.Amount,
       inventory: Map[Denomination, Availability],
   )(using Raise[F, DenominationSolver.Error]): F[Map[Denomination, Quantity]] =
     OrToolsSolverFactory
-      .make[F](OrToolsSolverFactory.Solver.SCIP)
+      .make[F](OrToolsSolverFactory.Solver.SCIP, numProcessors)
       .flatMap: solver =>
         solve(
           amount = targetAmount,
@@ -78,5 +80,7 @@ final class OrToolsDenominationSolver[F[_]: Async] extends DenominationSolver[F]
   end solve
 
 object OrToolsDenominationSolver:
-  def apply[F[_]: Async]: OrToolsDenominationSolver[F] =
-    new OrToolsDenominationSolver[F]()
+  def apply[F[_]: Async](
+      numProcessors: Int = 1,
+  ): OrToolsDenominationSolver[F] =
+    new OrToolsDenominationSolver[F](numProcessors)

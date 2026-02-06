@@ -2,16 +2,15 @@ package es.eriktorr
 package atm.application
 
 import atm.application.AtmApplicationService.Error.{InsufficientFunds, OutOfMoney}
-import atm.domain.model.types.TransactionExtensions.*
 import atm.domain.model.types.TransactionState
 import atm.domain.{AccountRepository, AtmRepository, CashDispenserService, PhysicalDispenser}
 import atm.repository.TransactionAuditor
 import cash.domain.DenominationSolver
 import cash.domain.model.*
 
-import cats.effect.{Async, Clock}
 import cats.effect.implicits.genTemporalOps
 import cats.effect.std.{AtomicCell, UUIDGen}
+import cats.effect.{Async, Clock}
 import cats.implicits.*
 import cats.mtl.implicits.given
 import cats.mtl.{Handle, Raise}
