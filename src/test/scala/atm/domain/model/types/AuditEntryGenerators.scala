@@ -13,14 +13,14 @@ import java.time.Instant
 import java.util.UUID
 
 object AuditEntryGenerators:
-  private val timestampGen =
+  private val transactionStateGen =
     Gen.oneOf(TransactionState.values.toSeq)
 
   def auditEntryGen(
       idGen: Gen[UUID] = Gen.uuid,
       accountIdGen: Gen[AccountId] = accountIdGen,
       moneyGen: Gen[Money] = moneyGen(),
-      stateGen: Gen[TransactionState] = timestampGen,
+      stateGen: Gen[TransactionState] = transactionStateGen,
       timestampGen: Gen[Instant] = instantGen,
   ): Gen[AuditEntry] =
     (

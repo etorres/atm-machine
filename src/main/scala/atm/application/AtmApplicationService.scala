@@ -57,6 +57,7 @@ object AtmApplicationService:
                   Logger[F].error(error)(
                     show"Hardware failed after debit! Manual intervention required for $accountId",
                   ) >> Async[F].raiseError(error)
+              _ <- syncToFile
             yield ()
           .timeout(timeout)
 
@@ -73,6 +74,14 @@ object AtmApplicationService:
                 inventory.filter(_._2 > 0).keySet
               InsufficientCash(availableDenominations)
                 .raise[F, Map[Denomination, Quantity]]
+
+      private def syncToFile =
+//        for {
+//          accounts  <- accountRepo.getAllBalances
+//          inventory <- atmRepo.getAvailableCash
+//          _         <- stateStore.dump(SystemSnapshot(accounts, inventory))
+//        } yield ()
+        Async[F].unit // TODO
     end new
 
   extension [F[_]: Async](self: AccountRepository[F])

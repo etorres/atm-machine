@@ -19,9 +19,16 @@ trait AtmRepository[F[_]]:
   ): F[Unit]
 
 object AtmRepository:
-  def make[F[_]: Async]: F[AtmRepository[F]] =
-    MapRef[F, Currency, Map[Denomination, Availability]].map: mapRef =>
-      InMemory[F](mapRef)
+  def make[F[_]: Async](
+      initial: Map[Currency, Map[Denomination, Availability]],
+  ): F[AtmRepository[F]] =
+    MapRef[F, Currency, Map[Denomination, Availability]]
+      .flatTap: mapRef =>
+        initial.toList.traverse:
+          case (currency, availabilities) =>
+            mapRef(currency).update(_ => Some(availabilities))
+      .map: mapRef =>
+        InMemory[F](mapRef)
 
   final class InMemory[F[_]: Sync](
       mapRef: MapRef[F, Currency, Option[Map[Denomination, Availability]]],

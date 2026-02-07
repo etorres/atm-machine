@@ -23,9 +23,16 @@ trait AccountRepository[F[_]]:
   ): F[Unit]
 
 object AccountRepository:
-  def make[F[_]: Async]: F[AccountRepository[F]] =
-    MapRef[F, AccountId, BigDecimal].map: mapRef =>
-      InMemory[F](mapRef)
+  def make[F[_]: Async](
+      initial: Map[AccountId, BigDecimal],
+  ): F[AccountRepository[F]] =
+    MapRef[F, AccountId, BigDecimal]
+      .flatTap: mapRef =>
+        initial.toList.traverse:
+          case (accountId, balance) =>
+            mapRef(accountId).update(_ => Some(balance))
+      .map: mapRef =>
+        InMemory[F](mapRef)
 
   final class InMemory[F[_]: Sync](
       mapRef: MapRef[F, AccountId, Option[BigDecimal]],

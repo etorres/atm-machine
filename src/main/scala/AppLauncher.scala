@@ -4,6 +4,7 @@ import atm.application.AtmApplicationService
 import atm.config.{AtmConfig, AtmParams}
 import atm.domain.{AccountRepository, AtmRepository, CashDispenserService}
 import atm.infrastructure.persistence.doobie.DoobieTransactionAuditor
+import atm.infrastructure.persistence.file.FileStateStore
 import atm.infrastructure.ui.ConsoleAtm
 import atm.infrastructure.{HardwareDispenserAdapter, LinePrinter}
 import cash.infrastructure.solvers.{OrToolsDenominationSolver, OrToolsSolverFactory}
@@ -17,6 +18,7 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import squants.market.EUR
 
+import java.nio.file.Path
 import scala.concurrent.duration.DurationInt
 
 object AppLauncher
@@ -39,11 +41,7 @@ object AppLauncher
             for
               logger <- Slf4jLogger.create[IO]
               given Logger[IO] = logger
-              _ <- warmUpOrTools(params.verbose)
-              atomicRepository <- (
-                AccountRepository.make[IO],
-                AtmRepository.make[IO],
-              ).tupled.flatMap(AtomicCell[IO].of)
+              atomicRepository <- loadSystemSnapshot(params.snapshotPath)
               denominationSolver = OrToolsDenominationSolver[IO](availableCores)
               dispenserService = CashDispenserService[IO](denominationSolver)
               linePrinter = LinePrinter[IO]
@@ -56,7 +54,7 @@ object AppLauncher
                 config.timeout,
               )
               ui = ConsoleAtm[IO](atmApplicationService, EUR)
-              _ <- ui.start()
+              _ <- warmUpOrTools(params.verbose) >> ui.start()
             yield ExitCode.Success
 
   private def warmUpOrTools(verbose: Boolean)(using Logger[IO]) =
@@ -66,6 +64,22 @@ object AppLauncher
       _ <- Console[IO].println(" Done!")
       _ <- Console[IO].println("System Ready.")
     yield ()
+
+  @SuppressWarnings(Array("org.wartremover.warts.Any"))
+  private def loadSystemSnapshot(
+      snapshotPath: Path,
+  ) =
+    for
+      stateStore = FileStateStore[IO](snapshotPath)
+      snapshot <- stateStore.load()
+      atomicRepository <- (
+        AccountRepository.make[IO](snapshot.accounts),
+        AtmRepository.make[IO](snapshot.cashInventory),
+      ).tupled.flatMap(AtomicCell[IO].of)
+      _ <- Console[IO].println(
+        s"Loaded ${snapshot.accounts.size} accounts and physical inventory.",
+      )
+    yield atomicRepository
 
   private def showProgressDots =
     (Console[IO].print(".") >> IO.sleep(500.millis)).foreverM
