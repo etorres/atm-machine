@@ -74,7 +74,7 @@ final class OrToolsDenominationSolver[F[_]: Async](
       Async[F]
         .pure(result.nonEmpty)
         .ifM(
-          ifTrue = Async[F].pure(result),
+          ifTrue = result.pure[F],
           ifFalse = DenominationSolver.Error.NotSolved.raise[F, Map[Denomination, Quantity]],
         )
   end solve

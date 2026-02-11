@@ -17,6 +17,7 @@ import cats.mtl.implicits.given
 import cats.mtl.{Handle, Raise}
 import org.typelevel.log4cats.Logger
 
+import scala.collection.immutable.SortedMap
 import scala.concurrent.duration.{Duration, DurationInt}
 import scala.util.control.NoStackTrace
 
@@ -57,7 +58,6 @@ object AtmApplicationService:
                   Logger[F].error(error)(
                     show"Hardware failed after debit! Manual intervention required for $accountId",
                   ) >> Async[F].raiseError(error)
-              _ <- syncToFile
             yield ()
           .timeout(timeout)
 
@@ -70,18 +70,8 @@ object AtmApplicationService:
             dispenserService.calculateWithdrawal(money.amount, inventory)
           .rescue:
             case DenominationSolver.Error.NotSolved =>
-              val availableDenominations =
-                inventory.filter(_._2 > 0).keySet
-              InsufficientCash(availableDenominations)
+              InsufficientCash(inventory.availableDenominations)
                 .raise[F, Map[Denomination, Quantity]]
-
-      private def syncToFile =
-//        for {
-//          accounts  <- accountRepo.getAllBalances
-//          inventory <- atmRepo.getAvailableCash
-//          _         <- stateStore.dump(SystemSnapshot(accounts, inventory))
-//        } yield ()
-        Async[F].unit // TODO
     end new
 
   extension [F[_]: Async](self: AccountRepository[F])
@@ -132,6 +122,10 @@ object AtmApplicationService:
                     ) >> Logger[F].info(error)(show"Manual intervention needed for Tx $txId")
             yield ()
       yield ()
+
+  extension (self: Map[Denomination, Availability])
+    def availableDenominations: Set[Denomination] =
+      SortedMap.from(self.filter(_._2 > 0)).keySet
 
   sealed abstract class DispenseError(message: String)
       extends RuntimeException(message)

@@ -31,13 +31,9 @@ object OrToolsSolverFactory:
       Sync[F].blocking(Loader.loadNativeLibraries())
 
     def showVersion =
-      Sync[F]
-        .pure(verbose)
-        .ifM(
-          ifTrue =
-            Logger[F].info(show"Google OR-Tools version: ${OrToolsVersion.getVersionString}"),
-          ifFalse = Sync[F].unit,
-        )
+      Logger[F]
+        .info(show"Google OR-Tools version: ${OrToolsVersion.getVersionString}")
+        .whenA(verbose)
 
     loadNativeLibraries >> showVersion
   end init
@@ -69,15 +65,13 @@ object OrToolsSolverFactory:
         IllegalStateException(show"Could not create solver $solver"),
       )
 
+    @SuppressWarnings(Array("org.wartremover.warts.Any"))
     def clear(solver: MPSolver): F[Unit] =
       for
         _ <- Sync[F].blocking(solver.clear())
         _ <- Sync[F]
-          .pure(solver.variables().isEmpty && solver.constraints().isEmpty)
-          .ifM(
-            ifTrue = Sync[F].unit,
-            ifFalse = Sync[F].raiseError(IllegalStateException("Failed to initialize the solver")),
-          )
+          .raiseError(IllegalStateException("Failed to initialize the solver"))
+          .unlessA(solver.variables().isEmpty && solver.constraints().isEmpty)
       yield ()
 
     createSolver.flatTap(clear)

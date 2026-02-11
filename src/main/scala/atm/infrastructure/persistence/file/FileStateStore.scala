@@ -27,7 +27,7 @@ object FileStateStore:
             decode[SystemSnapshot](content)
           .flatMap:
             case Right(snapshot) =>
-              Async[F].pure(snapshot)
+              snapshot.pure[F]
             case Left(error) =>
               Async[F].raiseError(RuntimeException("Failed to load system status", error))
 

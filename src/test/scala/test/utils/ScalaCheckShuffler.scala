@@ -4,9 +4,11 @@ package test.utils
 import org.scalacheck.{Arbitrary, Gen}
 
 final class ScalaCheckShuffler(seed: Long):
+  private lazy val rng = new java.util.Random(seed)
+  private lazy val scalaRng = scala.util.Random.javaRandomToRandom(rng)
+
   def shuffle[A](list: List[A]): List[A] =
-    val rng = new java.util.Random(seed)
-    scala.util.Random.javaRandomToRandom(rng).shuffle(list)
+    scalaRng.shuffle(list)
 
 object ScalaCheckShuffler:
   val shufflingGen: Gen[ScalaCheckShuffler] =

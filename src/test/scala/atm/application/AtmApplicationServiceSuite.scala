@@ -1,109 +1,148 @@
 package es.eriktorr
 package atm.application
 
-import atm.application.AtmApplicationServiceSuite.{testCaseGen, TestCase}
-import atm.application.AtmApplicationServiceSuiteRunner.{runWith, AtmApplicationServiceState}
-import atm.domain.model.types.{AuditEntry, TransactionState}
-import atm.infrastructure.TemporalGenerators.{instantGen, withinInstantRange}
-import cash.domain.model.CashGenerators.*
-import cash.domain.model.{AccountId, Denomination, Money, Quantity}
+import atm.application.AtmApplicationService.{availableDenominations, DispenseError}
+import atm.application.AtmApplicationServiceSuite.*
+import atm.application.gen.AtmGenerators
+import atm.application.support.AtmTestRunner.Stubs
+import atm.application.support.{AtmTestAudit, AtmTestRunner}
+import atm.application.types.StubStates
+import atm.domain.model.types.TransactionState
+import test.utils.FailureRate.alwaysFailed
 
-import cats.collections.Range
 import cats.effect.IO
 import cats.implicits.*
-import cats.mtl.Handle
-import munit.{CatsEffectSuite, ScalaCheckEffectSuite}
-import org.scalacheck.Gen
-import org.scalacheck.cats.implicits.given
 import org.scalacheck.effect.PropF.forAllF
 
-final class AtmApplicationServiceSuite extends CatsEffectSuite with ScalaCheckEffectSuite:
+final class AtmApplicationServiceSuite extends AtmTestRunner with AtmGenerators with AtmTestAudit:
   test("should withdraw an amount of money in the given currency"):
-    forAllF(testCaseGen):
-      case TestCase(accountId, money, initialState, expectedFinalState) =>
-        runWith(initialState): atmApplicationService =>
-          Handle
-            .allow[AtmApplicationService.DispenseError]:
-              atmApplicationService.withdraw(accountId, money)
-            .rescue: error =>
-              IO.fromEither(error.asLeft)
+    forAllF(withdrawalTestCaseGen):
+      case (accountId, money, initialState) =>
+        withService: (atmApplicationService, stubs) =>
+          stubs.withState(initialState)
+            *> atmApplicationService.withdraw(accountId, money)
         .map:
-          case (result, obtainedFinalState) =>
-            assert(result.isRight)
-            assertEquals(obtainedFinalState, expectedFinalState)
+          case (Left(error), _) =>
+            fail("Unexpected error", error)
+          case (Right(_), finalState) =>
+            verifyFundsInvariants((accountId, money, initialState), finalState)
+
+  test("should return an error when the account has insufficient funds"):
+    forAllF(insufficientFundsTestCaseGen):
+      case (accountId, money, initialState) =>
+        withService: (atmApplicationService, stubs) =>
+          stubs.withState(initialState)
+            *> atmApplicationService.withdraw(accountId, money)
+        .map:
+          case (Left(error: DispenseError.InsufficientFunds.type), finalState) =>
+            verifyFundsUnchanged((accountId, money, initialState), finalState)
+          case (Left(error), _) =>
+            fail("Unexpected error", error)
+          case (Right(_), _) =>
+            fail("Unexpected success")
+
+  test("should return an error when the ATM does not have enough money"):
+    forAllF(outOfMoneyTestCaseGen):
+      case (accountId, money, initialState) =>
+        withService: (atmApplicationService, stubs) =>
+          stubs
+            .withState(initialState)
+            .failingToDispenseCash
+            *> atmApplicationService.withdraw(accountId, money)
+        .map:
+          case (Left(DispenseError.InsufficientCash(availableDenominations)), finalState) =>
+            val finalDenominations = finalState.atmRepositoryState.value
+              .getOrElse(money.currency, Map.empty)
+              .availableDenominations
+            assert(finalDenominations == availableDenominations, "Available denominations")
+            verifyFundsUnchanged((accountId, money, initialState), finalState)
+          case (Left(error), _) =>
+            fail("Unexpected error", error)
+          case (Right(_), _) =>
+            fail("Unexpected success")
+
+  test("should refund withdrawn money if cash inventory update fails"):
+    forAllF(withdrawalTestCaseGen):
+      case (accountId, money, initialState) =>
+        withService: (atmApplicationService, stubs) =>
+          stubs
+            .withState(initialState)
+            .failingToDecrementCashInventory
+            *> atmApplicationService.withdraw(accountId, money)
+        .map:
+          case (Left(error), _) =>
+            fail("Unexpected error", error)
+          case (Right(_), finalState) =>
+            verifyFundsUnchanged(
+              (accountId, money, initialState),
+              finalState,
+              TransactionState.Refunded.some,
+            )
+
+  test("should trigger manual intervention when refunding funds to the account fails"):
+    forAllF(withdrawalTestCaseGen):
+      case (accountId, money, initialState) =>
+        withService: (atmApplicationService, stubs) =>
+          stubs
+            .withState(initialState)
+            .failingToRefund
+            *> atmApplicationService.withdraw(accountId, money)
+        .map:
+          case (Left(error), _) =>
+            fail("Unexpected error", error)
+          case (Right(_), finalState) =>
+            verifyFundsInconsistency(
+              (accountId, money, initialState),
+              finalState,
+            )
+
+  test("should return an error when money cannot be dispensed"):
+    forAllF(withdrawalTestCaseGen):
+      case (accountId, money, initialState) =>
+        withService: (atmApplicationService, stubs) =>
+          stubs
+            .withState(initialState)
+            .failingHardware
+            *> atmApplicationService.withdraw(accountId, money)
+        .map:
+          case (Left(error: RuntimeException), finalState) =>
+            verifyCashInconsistency((accountId, money, initialState), finalState)
+          case (Left(error), _) =>
+            fail("Unexpected error", error)
+          case (Right(_), _) =>
+            fail("Unexpected success")
 
 object AtmApplicationServiceSuite:
-  final private case class TestCase(
-      accountId: AccountId,
-      money: Money,
-      initialState: AtmApplicationServiceState,
-      expectedFinalState: AtmApplicationServiceState,
-  )
+  extension (self: Stubs)
+    def withState(
+        stubStates: StubStates,
+    ): IO[Stubs] =
+      for
+        _ <- self.accountRepositoryStub
+          .setState(stubStates.accountRepositoryState)
+        _ <- self.atmRepositoryStub
+          .setState(stubStates.atmRepositoryState)
+        _ <- self.cashDispenserServiceStub
+          .setState(stubStates.cashDispenserServiceState)
+      yield self
 
-  private val testCaseGen =
-    for
-      currency <- currencyGen
-      money <- moneyGen(currency)
-
-      accountId <- accountIdGen
-      balance <- Gen.choose(money.amount, 100_000)
-
-      uuid <- Gen.uuid
-      startInstant <- instantGen
-      debitInstant <- withinInstantRange(
-        Range(startInstant.plusSeconds(1), startInstant.plusSeconds(60)),
+  extension (self: IO[Stubs])
+    def failingToDispenseCash: IO[Stubs] =
+      self.flatTap(
+        _.cashDispenserServiceStub
+          .setFailureRate(alwaysFailed),
       )
-
-      denominations <-
-        Gen
-          .containerOfN[Set, Denomination](7, denominationGen)
-          .map(_.toList)
-      availabilities <- denominations.traverse: denomination =>
-        availabilityGen.map(denomination -> _)
-
-      availableDenominations = availabilities.filter:
-        case (_, availability) => availability > 0
-      size <- Gen.choose(0, availableDenominations.length)
-      removed <- availableDenominations
-        .take(size)
-        .traverse:
-          case (denomination, availability) =>
-            for
-              amount <- Gen.choose(1, availability)
-              quantity = Quantity.applyUnsafe(amount)
-            yield denomination -> quantity
-
-      initialState = AtmApplicationServiceState.empty
-        .setAccounts(Map(accountId -> balance))
-        .setAvailabilities(Map(currency -> availabilities.toMap))
-        .setInstants(List(startInstant, debitInstant))
-        .setInventories(Map((money.amount, availabilities.toMap) -> removed.toMap))
-        .setUUIDs(List(uuid))
-      expectedFinalState = initialState.cleanInstants.clearUUIDs
-        .setAccounts(Map(accountId -> (balance - money.amount)))
-        .setAuditEntries(
-          List(
-            AuditEntry(
-              id = uuid,
-              accountId = accountId,
-              money = money,
-              state = TransactionState.Debited,
-              timestamp = debitInstant,
-            ),
-            AuditEntry(
-              id = uuid,
-              accountId = accountId,
-              money = money,
-              state = TransactionState.Started,
-              timestamp = startInstant,
-            ),
-          ),
-        )
-        .setNotes(List(removed.toMap))
-        .setRemoved(List(currency -> removed.toMap))
-    yield TestCase(
-      accountId,
-      money,
-      initialState,
-      expectedFinalState,
-    )
+    def failingToDecrementCashInventory: IO[Stubs] =
+      self.flatTap(
+        _.atmRepositoryStub
+          .setFailureRate(alwaysFailed),
+      )
+    def failingToRefund: IO[Stubs] =
+      self.failingToDecrementCashInventory.flatTap:
+        _.accountRepositoryStub
+          .setFailureRate(alwaysFailed)
+    def failingHardware: IO[Stubs] =
+      self.flatTap(
+        _.physicalDispenserStub
+          .setFailureRate(alwaysFailed),
+      )

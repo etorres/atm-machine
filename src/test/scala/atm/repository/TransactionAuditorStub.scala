@@ -2,23 +2,25 @@ package es.eriktorr
 package atm.repository
 
 import atm.domain.model.types.{AuditEntry, TransactionState}
-import atm.repository.FakeTransactionAuditor.TransactionAuditorState
+import atm.repository.TransactionAuditorStub.TransactionAuditorState
 
 import cats.effect.{IO, Ref}
 import cats.implicits.*
+import es.eriktorr.test.stubs.{InMemoryState, SuccessPathProviderStub}
 
 import java.time.Instant
 import java.util.UUID
 
-final class FakeTransactionAuditor(
-    stateRef: Ref[IO, TransactionAuditorState],
-) extends TransactionAuditor[IO]:
+final class TransactionAuditorStub(
+    val stateRef: Ref[IO, TransactionAuditorState],
+) extends TransactionAuditor[IO]
+    with SuccessPathProviderStub[TransactionAuditorState, List[AuditEntry]]:
   override def createEntry(
       entry: AuditEntry,
   ): IO[Unit] =
     stateRef.flatModify: currentState =>
       val (updatedState, action) =
-        currentState.entries.find(_.id == entry.id) match
+        currentState.value.find(_.id == entry.id) match
           case Some(duplicated) =>
             val action = IO.raiseError(
               IllegalArgumentException(
@@ -27,8 +29,8 @@ final class FakeTransactionAuditor(
             )
             currentState -> action
           case None =>
-            val update = entry :: currentState.entries
-            currentState.setAuditEntries(update) -> IO.unit
+            val update = entry :: currentState.value
+            currentState.set(update) -> IO.unit
       (updatedState, action)
 
   override def updateState(
@@ -38,10 +40,10 @@ final class FakeTransactionAuditor(
   ): IO[Unit] =
     stateRef.flatModify: currentState =>
       val (updatedState, action) =
-        currentState.entries.find(_.id == id) match
+        currentState.value.find(_.id == id) match
           case Some(entry) =>
-            val update = entry.copy(state = newState, timestamp = at) :: currentState.entries
-            currentState.setAuditEntries(update) -> IO.unit
+            val update = entry.copy(state = newState, timestamp = at) :: currentState.value
+            currentState.set(update) -> IO.unit
           case None =>
             val action = IO.raiseError(
               IllegalArgumentException(show"Transaction with id $id not found"),
@@ -49,14 +51,14 @@ final class FakeTransactionAuditor(
             currentState -> action
       (updatedState, action)
 
-object FakeTransactionAuditor:
+object TransactionAuditorStub:
   final case class TransactionAuditorState(
-      entries: List[AuditEntry],
-  ):
-    def setAuditEntries(
-        newEntries: List[AuditEntry],
+      value: List[AuditEntry],
+  ) extends InMemoryState[TransactionAuditorState, List[AuditEntry]]:
+    def set(
+        newValue: List[AuditEntry],
     ): TransactionAuditorState =
-      copy(newEntries)
+      copy(newValue)
 
   object TransactionAuditorState:
     val empty: TransactionAuditorState = TransactionAuditorState(List.empty)

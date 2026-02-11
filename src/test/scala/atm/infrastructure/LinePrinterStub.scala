@@ -1,18 +1,18 @@
 package es.eriktorr
 package atm.infrastructure
 
-import atm.infrastructure.FakeLinePrinter.LinePrinterState
+import atm.infrastructure.LinePrinterStub.LinePrinterState
 
 import cats.effect.{IO, Ref}
 
-final class FakeLinePrinter(
+final class LinePrinterStub(
     stateRef: Ref[IO, LinePrinterState],
 ) extends LinePrinter[IO]:
   override def print(line: String): IO[Unit] =
     stateRef.update: currentState =>
       currentState.setLines(line :: currentState.lines)
 
-object FakeLinePrinter:
+object LinePrinterStub:
   final case class LinePrinterState(lines: List[String]):
     def setLines(newLines: List[String]): LinePrinterState =
       copy(newLines)

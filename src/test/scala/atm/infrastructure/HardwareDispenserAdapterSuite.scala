@@ -1,7 +1,7 @@
 package es.eriktorr
 package atm.infrastructure
 
-import atm.infrastructure.FakeLinePrinter.LinePrinterState
+import atm.infrastructure.LinePrinterStub.LinePrinterState
 import atm.infrastructure.HardwareDispenserAdapterSuite.{testCaseGen, TestCase}
 import cash.domain.model.CashGenerators.{denominationGen, quantityGen}
 import cash.domain.model.{Denomination, Quantity}
@@ -32,7 +32,7 @@ final class HardwareDispenserAdapterSuite extends CatsEffectSuite with ScalaChec
         Ref
           .of[IO, LinePrinterState](LinePrinterState.empty)
           .map: stateRef =>
-            stateRef -> FakeLinePrinter(stateRef)
+            stateRef -> LinePrinterStub(stateRef)
 
 object HardwareDispenserAdapterSuite:
   final private case class TestCase(
