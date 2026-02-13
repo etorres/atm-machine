@@ -2,7 +2,255 @@
 <project version="4">
   <component name="ScalaCompilerConfiguration">
     <option name="separateProdTestSources" value="true" />
-    <profile name="sbt 1" modules="atm-machine" />
+    <profile name="sbt 1" modules="atm-machine,atm-machine.app-launcher,atm-machine.atm-application,atm-machine.atm-domain,atm-machine.atm-infrastructure,atm-machine.cash-domain,atm-machine.core,atm-machine.test-support" />
+    <profile name="sbt 10" modules="atm-machine.atm-infrastructure.test">
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="macros" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xkind-projector" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wunused:implicits" />
+        <parameter value="-Wunused:explicits" />
+        <parameter value="-Wunused:imports" />
+        <parameter value="-Wunused:locals" />
+        <parameter value="-Wunused:params" />
+        <parameter value="-Wunused:privates" />
+        <parameter value="-java-output-version" />
+        <parameter value="25" />
+        <parameter value="-Werror" />
+        <parameter value="-Wsafe-init" />
+        <parameter value="-Yexplicit-nulls" />
+        <parameter value="-Xsemanticdb" />
+        <parameter value="-semanticdb-target" />
+        <parameter value="$PROJECT_DIR$/modules/atm/atm-infrastructure/target/scala-3.8.1/test-meta" />
+      </parameters>
+      <plugins>
+        <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 11" modules="atm-machine.atm-infrastructure.main">
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="macros" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xkind-projector" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wunused:implicits" />
+        <parameter value="-Wunused:explicits" />
+        <parameter value="-Wunused:imports" />
+        <parameter value="-Wunused:locals" />
+        <parameter value="-Wunused:params" />
+        <parameter value="-Wunused:privates" />
+        <parameter value="-java-output-version" />
+        <parameter value="25" />
+        <parameter value="-Werror" />
+        <parameter value="-Wsafe-init" />
+        <parameter value="-Yexplicit-nulls" />
+        <parameter value="-Xsemanticdb" />
+        <parameter value="-semanticdb-target" />
+        <parameter value="$PROJECT_DIR$/modules/atm/atm-infrastructure/target/scala-3.8.1/meta" />
+      </parameters>
+      <plugins>
+        <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 12" modules="atm-machine.cash-domain.test">
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="macros" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xkind-projector" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wunused:implicits" />
+        <parameter value="-Wunused:explicits" />
+        <parameter value="-Wunused:imports" />
+        <parameter value="-Wunused:locals" />
+        <parameter value="-Wunused:params" />
+        <parameter value="-Wunused:privates" />
+        <parameter value="-java-output-version" />
+        <parameter value="25" />
+        <parameter value="-Werror" />
+        <parameter value="-Wsafe-init" />
+        <parameter value="-Yexplicit-nulls" />
+        <parameter value="-Xsemanticdb" />
+        <parameter value="-semanticdb-target" />
+        <parameter value="$PROJECT_DIR$/modules/cash/cash-domain/target/scala-3.8.1/test-meta" />
+      </parameters>
+      <plugins>
+        <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 13" modules="atm-machine.cash-domain.main">
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="macros" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xkind-projector" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wunused:implicits" />
+        <parameter value="-Wunused:explicits" />
+        <parameter value="-Wunused:imports" />
+        <parameter value="-Wunused:locals" />
+        <parameter value="-Wunused:params" />
+        <parameter value="-Wunused:privates" />
+        <parameter value="-java-output-version" />
+        <parameter value="25" />
+        <parameter value="-Werror" />
+        <parameter value="-Wsafe-init" />
+        <parameter value="-Yexplicit-nulls" />
+        <parameter value="-Xsemanticdb" />
+        <parameter value="-semanticdb-target" />
+        <parameter value="$PROJECT_DIR$/modules/cash/cash-domain/target/scala-3.8.1/meta" />
+      </parameters>
+      <plugins>
+        <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 14" modules="atm-machine.core.test">
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="macros" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xkind-projector" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wunused:implicits" />
+        <parameter value="-Wunused:explicits" />
+        <parameter value="-Wunused:imports" />
+        <parameter value="-Wunused:locals" />
+        <parameter value="-Wunused:params" />
+        <parameter value="-Wunused:privates" />
+        <parameter value="-Xfatal-warnings" />
+        <parameter value="-Xsemanticdb" />
+        <parameter value="-semanticdb-target" />
+        <parameter value="$PROJECT_DIR$/modules/core/target/scala-3.8.1/test-meta" />
+      </parameters>
+      <plugins>
+        <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 15" modules="atm-machine.core.main">
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="macros" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xkind-projector" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wunused:implicits" />
+        <parameter value="-Wunused:explicits" />
+        <parameter value="-Wunused:imports" />
+        <parameter value="-Wunused:locals" />
+        <parameter value="-Wunused:params" />
+        <parameter value="-Wunused:privates" />
+        <parameter value="-Xfatal-warnings" />
+        <parameter value="-Xsemanticdb" />
+        <parameter value="-semanticdb-target" />
+        <parameter value="$PROJECT_DIR$/modules/core/target/scala-3.8.1/meta" />
+      </parameters>
+      <plugins>
+        <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 16" modules="atm-machine.test-support.test">
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="macros" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xkind-projector" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wunused:implicits" />
+        <parameter value="-Wunused:explicits" />
+        <parameter value="-Wunused:imports" />
+        <parameter value="-Wunused:locals" />
+        <parameter value="-Wunused:params" />
+        <parameter value="-Wunused:privates" />
+        <parameter value="-java-output-version" />
+        <parameter value="25" />
+        <parameter value="-Werror" />
+        <parameter value="-Wsafe-init" />
+        <parameter value="-Yexplicit-nulls" />
+        <parameter value="-Xsemanticdb" />
+        <parameter value="-semanticdb-target" />
+        <parameter value="$PROJECT_DIR$/modules/test/test-support/target/scala-3.8.1/test-meta" />
+      </parameters>
+      <plugins>
+        <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 17" modules="atm-machine.test-support.main">
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="macros" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xkind-projector" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wunused:implicits" />
+        <parameter value="-Wunused:explicits" />
+        <parameter value="-Wunused:imports" />
+        <parameter value="-Wunused:locals" />
+        <parameter value="-Wunused:params" />
+        <parameter value="-Wunused:privates" />
+        <parameter value="-java-output-version" />
+        <parameter value="25" />
+        <parameter value="-Werror" />
+        <parameter value="-Wsafe-init" />
+        <parameter value="-Yexplicit-nulls" />
+        <parameter value="-Xsemanticdb" />
+        <parameter value="-semanticdb-target" />
+        <parameter value="$PROJECT_DIR$/modules/test/test-support/target/scala-3.8.1/meta" />
+      </parameters>
+      <plugins>
+        <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />
+      </plugins>
+    </profile>
     <profile name="sbt 2" modules="atm-machine.test">
       <option name="implicitConversions" value="true" />
       <option name="higherKinds" value="true" />
@@ -62,6 +310,198 @@
         <parameter value="-Xsemanticdb" />
         <parameter value="-semanticdb-target" />
         <parameter value="$PROJECT_DIR$/target/scala-3.8.1/meta" />
+      </parameters>
+      <plugins>
+        <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 4" modules="atm-machine.app-launcher.test">
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="macros" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xkind-projector" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wunused:implicits" />
+        <parameter value="-Wunused:explicits" />
+        <parameter value="-Wunused:imports" />
+        <parameter value="-Wunused:locals" />
+        <parameter value="-Wunused:params" />
+        <parameter value="-Wunused:privates" />
+        <parameter value="-java-output-version" />
+        <parameter value="25" />
+        <parameter value="-Werror" />
+        <parameter value="-Wsafe-init" />
+        <parameter value="-Yexplicit-nulls" />
+        <parameter value="-Xsemanticdb" />
+        <parameter value="-semanticdb-target" />
+        <parameter value="$PROJECT_DIR$/modules/atm/app-launcher/target/scala-3.8.1/test-meta" />
+      </parameters>
+      <plugins>
+        <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 5" modules="atm-machine.app-launcher.main">
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="macros" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xkind-projector" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wunused:implicits" />
+        <parameter value="-Wunused:explicits" />
+        <parameter value="-Wunused:imports" />
+        <parameter value="-Wunused:locals" />
+        <parameter value="-Wunused:params" />
+        <parameter value="-Wunused:privates" />
+        <parameter value="-java-output-version" />
+        <parameter value="25" />
+        <parameter value="-Werror" />
+        <parameter value="-Wsafe-init" />
+        <parameter value="-Yexplicit-nulls" />
+        <parameter value="-Xsemanticdb" />
+        <parameter value="-semanticdb-target" />
+        <parameter value="$PROJECT_DIR$/modules/atm/app-launcher/target/scala-3.8.1/meta" />
+      </parameters>
+      <plugins>
+        <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 6" modules="atm-machine.atm-application.test">
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="macros" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xkind-projector" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wunused:implicits" />
+        <parameter value="-Wunused:explicits" />
+        <parameter value="-Wunused:imports" />
+        <parameter value="-Wunused:locals" />
+        <parameter value="-Wunused:params" />
+        <parameter value="-Wunused:privates" />
+        <parameter value="-java-output-version" />
+        <parameter value="25" />
+        <parameter value="-Werror" />
+        <parameter value="-Wsafe-init" />
+        <parameter value="-Yexplicit-nulls" />
+        <parameter value="-Xsemanticdb" />
+        <parameter value="-semanticdb-target" />
+        <parameter value="$PROJECT_DIR$/modules/atm/atm-application/target/scala-3.8.1/test-meta" />
+      </parameters>
+      <plugins>
+        <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 7" modules="atm-machine.atm-application.main">
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="macros" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xkind-projector" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wunused:implicits" />
+        <parameter value="-Wunused:explicits" />
+        <parameter value="-Wunused:imports" />
+        <parameter value="-Wunused:locals" />
+        <parameter value="-Wunused:params" />
+        <parameter value="-Wunused:privates" />
+        <parameter value="-java-output-version" />
+        <parameter value="25" />
+        <parameter value="-Werror" />
+        <parameter value="-Wsafe-init" />
+        <parameter value="-Yexplicit-nulls" />
+        <parameter value="-Xsemanticdb" />
+        <parameter value="-semanticdb-target" />
+        <parameter value="$PROJECT_DIR$/modules/atm/atm-application/target/scala-3.8.1/meta" />
+      </parameters>
+      <plugins>
+        <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 8" modules="atm-machine.atm-domain.test">
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="macros" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xkind-projector" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wunused:implicits" />
+        <parameter value="-Wunused:explicits" />
+        <parameter value="-Wunused:imports" />
+        <parameter value="-Wunused:locals" />
+        <parameter value="-Wunused:params" />
+        <parameter value="-Wunused:privates" />
+        <parameter value="-java-output-version" />
+        <parameter value="25" />
+        <parameter value="-Werror" />
+        <parameter value="-Wsafe-init" />
+        <parameter value="-Yexplicit-nulls" />
+        <parameter value="-Xsemanticdb" />
+        <parameter value="-semanticdb-target" />
+        <parameter value="$PROJECT_DIR$/modules/atm/atm-domain/target/scala-3.8.1/test-meta" />
+      </parameters>
+      <plugins>
+        <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 9" modules="atm-machine.atm-domain.main">
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="macros" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xkind-projector" />
+        <parameter value="-Wvalue-discard" />
+        <parameter value="-Wnonunit-statement" />
+        <parameter value="-Wunused:implicits" />
+        <parameter value="-Wunused:explicits" />
+        <parameter value="-Wunused:imports" />
+        <parameter value="-Wunused:locals" />
+        <parameter value="-Wunused:params" />
+        <parameter value="-Wunused:privates" />
+        <parameter value="-java-output-version" />
+        <parameter value="25" />
+        <parameter value="-Werror" />
+        <parameter value="-Wsafe-init" />
+        <parameter value="-Yexplicit-nulls" />
+        <parameter value="-Xsemanticdb" />
+        <parameter value="-semanticdb-target" />
+        <parameter value="$PROJECT_DIR$/modules/atm/atm-domain/target/scala-3.8.1/meta" />
       </parameters>
       <plugins>
         <plugin path="$PROJECT_DIR$/target/scala-3.8.1/compiler_plugins/wartremover_3.8.1-3.5.5.jar" />

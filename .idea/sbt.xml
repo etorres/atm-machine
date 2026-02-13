@@ -8,6 +8,12 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/modules/atm/app-launcher" />
+            <option value="$PROJECT_DIR$/modules/atm/atm-application" />
+            <option value="$PROJECT_DIR$/modules/atm/atm-domain" />
+            <option value="$PROJECT_DIR$/modules/atm/atm-infrastructure" />
+            <option value="$PROJECT_DIR$/modules/cash/cash-domain" />
+            <option value="$PROJECT_DIR$/modules/test/test-support" />
             <option value="$PROJECT_DIR$/project" />
           </set>
         </option>
