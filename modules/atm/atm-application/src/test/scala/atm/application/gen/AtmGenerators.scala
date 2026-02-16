@@ -1,16 +1,24 @@
 package es.eriktorr
 package atm.application.gen
 
+import atm.application.AtmApplicationService
 import atm.application.types.{emptyStubStates, TestCase}
-import atm.domain.model.AtmGenerators.accountIdGen
+import atm.domain.model.AtmGenerators.{accountIdGen, terminalIdGen}
+import atm.domain.model.Receipt
+import atm.domain.model.types.AuditEntryGenerators.transactionIdGen
 import cash.domain.model.*
 import cash.domain.model.CashGenerators.{currencyGen, moneyGen}
+import test.gen.TemporalGenerators.{instantGen, withinInstantRange}
 import test.utils.ScalaCheckShuffler
 import test.utils.ScalaCheckShuffler.shufflingGen
 
+import cats.collections.Range
 import cats.implicits.*
 import org.scalacheck.Gen
 import org.scalacheck.cats.implicits.*
+
+import java.time.Instant
+import java.util.UUID
 
 trait AtmGenerators:
   private def cashInventoryGen(using
@@ -73,6 +81,18 @@ trait AtmGenerators:
       shuffler <- shufflingGen
       given ScalaCheckShuffler = shuffler
 
+      terminalId <- terminalIdGen
+
+      transactionId <- transactionIdGen
+      completeInstant <- instantGen
+      otherInstants <- Gen.listOfN(
+        3,
+        withinInstantRange(
+          Range(completeInstant.minusSeconds(60), completeInstant.minusSeconds(1)),
+        ),
+      )
+      receiptInstant = otherInstants.maxOption.getOrElse(Instant.MIN)
+
       cashInventory <- cashInventoryGen
       withdrawal <- withdrawalGen(cashInventory)
       money <- withdrawalMoneyGen(withdrawal)
@@ -83,17 +103,32 @@ trait AtmGenerators:
       initialState = emptyStubStates
         .setAccounts(Map(accountId -> balance))
         .setCashInventory(Map(money.currency -> cashInventory))
+        .setInstants((completeInstant :: otherInstants).sorted)
         .setWithdrawableFunds(Map((money.amount, cashInventory) -> withdrawal))
+        .setUUIDs(List(transactionId).map(UUID.fromString))
+
+      expectedReceipt = Receipt(
+        transactionId,
+        terminalId,
+        accountId,
+        money,
+        AtmApplicationService.timestampFrom(receiptInstant),
+        Receipt.OperationType.Withdrawal,
+      )
     yield (
+      terminalId,
       accountId,
       money,
       initialState,
+      Some(expectedReceipt),
     )
 
   val insufficientFundsTestCaseGen: Gen[TestCase] =
     for
       shuffler <- shufflingGen
       given ScalaCheckShuffler = shuffler
+
+      terminalId <- terminalIdGen
 
       cashInventory <- cashInventoryGen
       withdrawal <- withdrawalGen(cashInventory)
@@ -107,15 +142,19 @@ trait AtmGenerators:
         .setCashInventory(Map(money.currency -> cashInventory))
         .setWithdrawableFunds(Map((money.amount, cashInventory) -> withdrawal))
     yield (
+      terminalId,
       accountId,
       money,
       initialState,
+      None,
     )
 
   val outOfMoneyTestCaseGen: Gen[TestCase] =
     for
       shuffler <- shufflingGen
       given ScalaCheckShuffler = shuffler
+
+      terminalId <- terminalIdGen
 
       cashInventory <- cashInventoryGen
       money <- moneyGen()
@@ -127,7 +166,9 @@ trait AtmGenerators:
         .setAccounts(Map(accountId -> balance))
         .setCashInventory(Map(money.currency -> cashInventory))
     yield (
+      terminalId,
       accountId,
       money,
       initialState,
+      None,
     )

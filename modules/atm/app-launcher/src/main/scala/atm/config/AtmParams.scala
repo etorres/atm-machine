@@ -1,13 +1,17 @@
 package es.eriktorr
 package atm.config
 
+import atm.domain.model.TerminalId
+
 import cats.implicits.*
 import com.monovore.decline.Opts
+import io.github.iltotore.iron.decline.given
 
 import java.nio.file.Path
 
 final case class AtmParams(
     snapshotPath: Path,
+    terminalId: TerminalId,
     verbose: Boolean,
 )
 
@@ -16,6 +20,10 @@ object AtmParams:
     (
       Opts.argument[Path](
         metavar = "snapshot-file",
+      ),
+      Opts.option[TerminalId](
+        long = "terminalId",
+        help = "Unique identifier for the ATM terminal",
       ),
       Opts
         .flag(

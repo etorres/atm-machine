@@ -2,7 +2,7 @@ package es.eriktorr
 package atm.infrastructure.persistence.doobie
 
 import atm.domain.model.AccountId
-import atm.domain.model.types.TransactionState
+import atm.domain.model.types.{TransactionId, TransactionState}
 import cash.domain.model.Money
 
 import cats.implicits.*
@@ -30,6 +30,9 @@ trait DoobieAuditProtocol:
   given Write[Money] =
     Write[(Money.Amount, Currency)].contramap: money =>
       (money.amount, money.currency)
+
+  given Meta[TransactionId] =
+    Meta[String].imap(TransactionId.applyUnsafe)(identity)
 
   given Get[TransactionState] =
     Get.deriveEnumString[TransactionState]

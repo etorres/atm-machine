@@ -1,27 +1,30 @@
 package es.eriktorr
 package atm.application.support
 
-import atm.application.types.{StubStates, TestCase}
+import atm.application.types.StubStates
 import atm.domain.model.AccountId
 import atm.domain.model.types.TransactionState
+import cash.domain.model.Money
 
 import cats.implicits.*
 import squants.market.Currency
 
 trait AtmTestAudit:
   def verifyFundsInvariants(
-      testCase: TestCase,
+      accountId: AccountId,
+      money: Money,
+      initialState: StubStates,
       finalState: StubStates,
   ): Unit =
-    val initialBalance = balanceFrom(testCase.accountId, testCase.initialState)
-    val finalBalance = balanceFrom(testCase.accountId, finalState)
-    val initialCash = cashFrom(testCase.money.currency, testCase.initialState)
-    val finalCash = cashFrom(testCase.money.currency, finalState)
+    val initialBalance = balanceFrom(accountId, initialState)
+    val finalBalance = balanceFrom(accountId, finalState)
+    val initialCash = cashFrom(money.currency, initialState)
+    val finalCash = cashFrom(money.currency, finalState)
     val dispensedMoney = dispensedMoneyFrom(finalState)
 
     val totalFundsUnchanged =
-      initialBalance - testCase.money.amount + initialCash - dispensedMoney === finalBalance + finalCash
-    val balanceUnchanged = initialBalance - testCase.money.amount === finalBalance
+      initialBalance - money.amount + initialCash - dispensedMoney === finalBalance + finalCash
+    val balanceUnchanged = initialBalance - money.amount === finalBalance
     val cashUnchanged = initialCash - dispensedMoney === finalCash
 
     assert(totalFundsUnchanged, "Total funds invariant after withdrawal")
@@ -29,20 +32,28 @@ trait AtmTestAudit:
     assert(cashUnchanged, "Cash after withdrawal is correct")
 
     verifyTransactionStates(
-      testCase,
+      accountId,
+      money,
       finalState,
-      TransactionState.Debited.some,
+      TransactionState.Completed.some,
+      List(
+        TransactionState.Refunding,
+        TransactionState.Refunded,
+        TransactionState.ManualInterventionRequired,
+      ),
     )
 
   def verifyFundsUnchanged(
-      testCase: TestCase,
+      accountId: AccountId,
+      money: Money,
+      initialState: StubStates,
       finalState: StubStates,
       maybeFinalTransactionState: Option[TransactionState] = None,
   ): Unit =
-    val initialBalance = balanceFrom(testCase.accountId, testCase.initialState)
-    val finalBalance = balanceFrom(testCase.accountId, finalState)
-    val initialCash = cashFrom(testCase.money.currency, testCase.initialState)
-    val finalCash = cashFrom(testCase.money.currency, finalState)
+    val initialBalance = balanceFrom(accountId, initialState)
+    val finalBalance = balanceFrom(accountId, finalState)
+    val initialCash = cashFrom(money.currency, initialState)
+    val finalCash = cashFrom(money.currency, finalState)
 
     val totalFundsUnchanged = initialBalance + initialCash === finalBalance + finalCash
     val balanceUnchanged = initialBalance === finalBalance
@@ -53,23 +64,27 @@ trait AtmTestAudit:
     assert(cashUnchanged, "Cash after unsuccessful withdrawal is correct")
 
     verifyTransactionStates(
-      testCase,
+      accountId,
+      money,
       finalState,
       maybeFinalTransactionState,
+      List(TransactionState.Completed),
     )
 
   def verifyFundsInconsistency(
-      testCase: TestCase,
+      accountId: AccountId,
+      money: Money,
+      initialState: StubStates,
       finalState: StubStates,
   ): Unit =
-    val initialBalance = balanceFrom(testCase.accountId, testCase.initialState)
-    val finalBalance = balanceFrom(testCase.accountId, finalState)
-    val initialCash = cashFrom(testCase.money.currency, testCase.initialState)
-    val finalCash = cashFrom(testCase.money.currency, finalState)
+    val initialBalance = balanceFrom(accountId, initialState)
+    val finalBalance = balanceFrom(accountId, finalState)
+    val initialCash = cashFrom(money.currency, initialState)
+    val finalCash = cashFrom(money.currency, finalState)
 
     val totalFundsChanged =
-      initialBalance - testCase.money.amount + initialCash === finalBalance + finalCash
-    val balanceChanged = initialBalance - testCase.money.amount === finalBalance
+      initialBalance - money.amount + initialCash === finalBalance + finalCash
+    val balanceChanged = initialBalance - money.amount === finalBalance
     val cashUnchanged = initialCash === finalCash
 
     assert(totalFundsChanged, "Total funds changed after unsuccessful refund")
@@ -77,32 +92,36 @@ trait AtmTestAudit:
     assert(cashUnchanged, "Cash after unsuccessful refund is correct")
 
     verifyTransactionStates(
-      testCase,
+      accountId,
+      money,
       finalState,
       TransactionState.ManualInterventionRequired.some,
-      List(TransactionState.Refunded),
+      List(TransactionState.Refunded, TransactionState.Completed),
     )
 
   def verifyCashInconsistency(
-      testCase: TestCase,
+      accountId: AccountId,
+      money: Money,
+      initialState: StubStates,
       finalState: StubStates,
   ): Unit =
-    val initialBalance = balanceFrom(testCase.accountId, testCase.initialState)
-    val finalBalance = balanceFrom(testCase.accountId, finalState)
-    val initialCash = cashFrom(testCase.money.currency, testCase.initialState)
-    val finalCash = cashFrom(testCase.money.currency, finalState)
+    val initialBalance = balanceFrom(accountId, initialState)
+    val finalBalance = balanceFrom(accountId, finalState)
+    val initialCash = cashFrom(money.currency, initialState)
+    val finalCash = cashFrom(money.currency, finalState)
 
     val totalFundsChanged =
-      initialBalance - testCase.money.amount + initialCash - testCase.money.amount === finalBalance + finalCash
-    val balanceUnchanged = initialBalance - testCase.money.amount === finalBalance
-    val cashChanged = initialCash - testCase.money.amount === finalCash
+      initialBalance - money.amount + initialCash - money.amount === finalBalance + finalCash
+    val balanceUnchanged = initialBalance - money.amount === finalBalance
+    val cashChanged = initialCash - money.amount === finalCash
 
     assert(totalFundsChanged, "Total funds changed after unsuccessful delivery")
     assert(balanceUnchanged, "Balance after unsuccessful delivery is correct")
     assert(cashChanged, "Cash after unsuccessful delivery is correct")
 
     verifyTransactionStates(
-      testCase,
+      accountId,
+      money,
       finalState,
       TransactionState.Debited.some,
     )
@@ -133,17 +152,12 @@ trait AtmTestAudit:
       .map(BigDecimal.apply)
       .sum
 
-  private val allTransactions =
-    List(
-      TransactionState.Started,
-      TransactionState.Debited,
-      TransactionState.Refunding,
-      TransactionState.Refunded,
-      TransactionState.ManualInterventionRequired,
-    )
+  private lazy val allTransactions =
+    TransactionState.values.toList
 
   private def verifyTransactionStates(
-      testCase: TestCase,
+      accountId: AccountId,
+      money: Money,
       finalState: StubStates,
       maybeFinalTransactionState: Option[TransactionState],
       skippedTransactionStates: List[TransactionState] = List.empty,
@@ -151,8 +165,9 @@ trait AtmTestAudit:
     val auditEntries =
       finalState.transactionAuditorState.value
         .filter: entry =>
-          entry.accountId == testCase.accountId && entry.money == testCase.money
-        .sortBy(_.timestamp)
+          entry.accountId == accountId && entry.money == money
+        .sortBy: entry =>
+          (entry.timestamp, entry.state)
     val actualTransactionStates =
       auditEntries.groupMap(_.id)(_.state).values.flatten.toList
     val allowedTransactions = allTransactions.diff(skippedTransactionStates)

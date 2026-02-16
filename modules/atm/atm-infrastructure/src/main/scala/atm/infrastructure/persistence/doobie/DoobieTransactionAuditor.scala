@@ -1,20 +1,18 @@
 package es.eriktorr
 package atm.infrastructure.persistence.doobie
 
-import atm.domain.model.types.{AuditEntry, TransactionState}
+import atm.domain.model.types.{AuditEntry, TransactionId, TransactionState}
 import atm.repository.TransactionAuditor
 
 import cats.effect.{Async, Resource}
 import cats.implicits.*
 import doobie.*
 import doobie.h2.H2Transactor
-import doobie.h2.implicits.*
 import doobie.implicits.*
 import doobie.implicits.javatimedrivernative.*
 import doobie.util.ExecutionContexts
 
 import java.time.Instant
-import java.util.UUID
 
 final class DoobieTransactionAuditor[F[_]: Async](
     transactor: Transactor[F],
@@ -26,7 +24,7 @@ final class DoobieTransactionAuditor[F[_]: Async](
     insert(entry)
 
   override def updateState(
-      id: UUID,
+      id: TransactionId,
       newState: TransactionState,
       at: Instant,
   ): F[Unit] =
@@ -38,7 +36,7 @@ final class DoobieTransactionAuditor[F[_]: Async](
           IllegalArgumentException(show"Transaction with id $id not found"),
         )
 
-  def findBy(id: UUID): F[List[AuditEntry]] =
+  def findBy(id: TransactionId): F[List[AuditEntry]] =
     sql"""|
           |SELECT
           |  id, account_id, money_amount, money_currency, state, timestamp
@@ -49,7 +47,7 @@ final class DoobieTransactionAuditor[F[_]: Async](
       .to[List]
       .transact(transactor)
 
-  private def findLatestBy(id: UUID) =
+  private def findLatestBy(id: TransactionId) =
     sql"""|
           |SELECT
           |  id, account_id, money_amount, money_currency, state, timestamp

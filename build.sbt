@@ -65,8 +65,8 @@ lazy val cashDomain =
       name := "cash-domain",
       libraryDependencies ++= Seq(
         "com.google.ortools" % "ortools-java" % "9.15.6755",
-        "io.github.iltotore" %% "iron" % "3.2.3",
-        "io.github.iltotore" %% "iron-cats" % "3.2.3" % Test,
+        "io.github.iltotore" %% "iron" % "3.3.0",
+        "io.github.iltotore" %% "iron-cats" % "3.3.0" % Test,
         "org.typelevel" %% "cats-core" % "2.13.0",
         "org.typelevel" %% "cats-effect" % "3.6.3",
         "org.typelevel" %% "cats-effect-kernel" % "3.6.3",
@@ -84,7 +84,7 @@ lazy val atmDomain =
     .settings(
       name := "atm-domain",
       libraryDependencies ++= Seq(
-        "io.github.iltotore" %% "iron" % "3.2.3",
+        "io.github.iltotore" %% "iron" % "3.3.0",
         "org.typelevel" %% "cats-core" % "2.13.0",
         "org.typelevel" %% "cats-effect" % "3.6.3",
         "org.typelevel" %% "cats-effect-kernel" % "3.6.3",
@@ -104,7 +104,7 @@ lazy val atmApplication =
     .settings(
       name := "atm-application",
       libraryDependencies ++= Seq(
-        "io.github.iltotore" %% "iron" % "3.2.3",
+        "io.github.iltotore" %% "iron" % "3.3.0",
         "org.typelevel" %% "cats-core" % "2.13.0",
         "org.typelevel" %% "cats-effect" % "3.6.3",
         "org.typelevel" %% "cats-effect-kernel" % "3.6.3",
@@ -127,8 +127,8 @@ lazy val atmInfrastructure =
         "com.h2database" % "h2" % "2.4.240",
         "io.circe" %% "circe-core" % "0.14.15",
         "io.circe" %% "circe-parser" % "0.14.15",
-        "io.github.iltotore" %% "iron" % "3.2.3",
-        "io.github.iltotore" %% "iron-circe" % "3.2.3",
+        "io.github.iltotore" %% "iron" % "3.3.0",
+        "io.github.iltotore" %% "iron-circe" % "3.3.0",
         "org.typelevel" %% "cats-core" % "2.13.0",
         "org.typelevel" %% "cats-effect" % "3.6.3",
         "org.typelevel" %% "cats-effect-kernel" % "3.6.3",
@@ -152,11 +152,13 @@ lazy val testSupport =
       name := "test-support",
       libraryDependencies ++= Seq(
         "com.47deg" %% "scalacheck-toolbox-datetime" % "0.7.0",
-        "io.github.iltotore" %% "iron" % "3.2.3",
+        "io.github.iltotore" %% "iron" % "3.3.0",
         "org.scalacheck" %% "scalacheck" % "1.19.0",
+        "org.typelevel" %% "cats-core" % "2.13.0",
         "org.typelevel" %% "cats-collections-core" % "0.9.10",
         "org.typelevel" %% "cats-effect" % "3.6.3",
         "org.typelevel" %% "cats-effect-kernel" % "3.6.3",
+        "org.typelevel" %% "cats-effect-std" % "3.6.3",
         "org.typelevel" %% "cats-mtl" % "1.6.0",
       ),
     )
@@ -168,7 +170,8 @@ lazy val appLauncher =
     .settings(
       name := "app-launcher",
       libraryDependencies ++= Seq(
-        "io.github.iltotore" %% "iron" % "3.2.3",
+        "io.github.iltotore" %% "iron" % "3.3.0",
+        "io.github.iltotore" %% "iron-decline" % "3.3.0",
         "com.lmax" % "disruptor" % "3.4.4" % Runtime,
         "com.monovore" %% "decline" % "2.6.0",
         "com.monovore" %% "decline-effect" % "2.6.0",

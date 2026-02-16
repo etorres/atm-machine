@@ -9,10 +9,9 @@ import cats.derived.*
 import org.typelevel.cats.time.instances.instant.given
 
 import java.time.Instant
-import java.util.UUID
 
 final case class AuditEntry(
-    id: UUID,
+    id: TransactionId,
     accountId: AccountId,
     money: Money,
     state: TransactionState,

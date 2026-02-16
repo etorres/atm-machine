@@ -1,7 +1,7 @@
 package es.eriktorr
 package atm.repository
 
-import atm.domain.model.types.{AuditEntry, TransactionState}
+import atm.domain.model.types.{AuditEntry, TransactionId, TransactionState}
 import atm.repository.TransactionAuditorStub.TransactionAuditorState
 import test.stubs.{InMemoryState, SuccessPathProviderStub}
 
@@ -9,7 +9,6 @@ import cats.effect.{IO, Ref}
 import cats.implicits.*
 
 import java.time.Instant
-import java.util.UUID
 
 final class TransactionAuditorStub(
     val stateRef: Ref[IO, TransactionAuditorState],
@@ -34,7 +33,7 @@ final class TransactionAuditorStub(
       (updatedState, action)
 
   override def updateState(
-      id: UUID,
+      id: TransactionId,
       newState: TransactionState,
       at: Instant,
   ): IO[Unit] =

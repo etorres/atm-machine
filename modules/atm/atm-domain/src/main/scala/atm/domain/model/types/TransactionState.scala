@@ -6,3 +6,6 @@ import cats.derived.*
 
 enum TransactionState derives Show:
   case Started, Debited, Completed, Refunding, Refunded, ManualInterventionRequired
+
+object TransactionState:
+  given Ordering[TransactionState] = Ordering.by(_.ordinal)

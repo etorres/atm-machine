@@ -65,12 +65,11 @@ object OrToolsSolverFactory:
         IllegalStateException(show"Could not create solver $solver"),
       )
 
-    @SuppressWarnings(Array("org.wartremover.warts.Any"))
     def clear(solver: MPSolver): F[Unit] =
       for
         _ <- Sync[F].blocking(solver.clear())
         _ <- Sync[F]
-          .raiseError(IllegalStateException("Failed to initialize the solver"))
+          .raiseError[Unit](IllegalStateException("Failed to initialize the solver"))
           .unlessA(solver.variables().isEmpty && solver.constraints().isEmpty)
       yield ()
 

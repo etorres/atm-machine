@@ -51,6 +51,7 @@ object AppLauncher
                 transactionAuditor,
                 dispenserService,
                 physicalDispenser,
+                params.terminalId,
                 config.timeout,
               )
               ui = ConsoleAtm[IO](atmApplicationService, EUR)
@@ -65,7 +66,6 @@ object AppLauncher
       _ <- Console[IO].println("System Ready.")
     yield ()
 
-  @SuppressWarnings(Array("org.wartremover.warts.Any"))
   private def loadSystemSnapshot(
       snapshotPath: Path,
   ) =
@@ -77,7 +77,7 @@ object AppLauncher
         AtmRepository.make[IO](snapshot.cashInventory),
       ).tupled.flatMap(AtomicCell[IO].of)
       _ <- Console[IO].println(
-        s"Loaded ${snapshot.accounts.size} accounts and physical inventory.",
+        show"Loaded ${snapshot.accounts.size} accounts and physical inventory.",
       )
     yield atomicRepository
 
