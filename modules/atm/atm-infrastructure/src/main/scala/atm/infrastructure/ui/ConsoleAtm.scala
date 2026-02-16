@@ -59,7 +59,7 @@ object ConsoleAtm:
           .rescue:
             case InsufficientFunds =>
               Console[F].println("Operation Failed: Your account has insufficient funds.")
-            case InsufficientCash(availableDenominations) if availableDenominations.nonEmpty =>
+            case InventoryShortage(availableDenominations) if availableDenominations.nonEmpty =>
               for
                 suggested = availableDenominations
                   .map(_.toString)
@@ -68,7 +68,7 @@ object ConsoleAtm:
                 _ <- Console[F].println(show"Currently we can offer you: $suggested")
                 _ <- retry(accountId)
               yield ()
-            case InsufficientCash(_) =>
+            case InventoryShortage(_) =>
               Console[F].println("Operation Failed: The ATM is currently out of cash.")
             case RefundedError =>
               Console[F].println("Operation Failed: An internal error occurred.") >>

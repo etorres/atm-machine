@@ -42,7 +42,7 @@ final class AtmApplicationServiceSuite extends AtmTestRunner with AtmGenerators 
           stubs.failingToDispenseCash
             *> atmApplicationService.withdraw(accountId, money)
         .mapOrFail:
-          case (Left(DispenseError.InsufficientCash(availableDenominations)), finalState) =>
+          case (Left(DispenseError.InventoryShortage(availableDenominations)), finalState) =>
             val finalDenominations = finalState.atmRepositoryState.value
               .getOrElse(money.currency, Map.empty)
               .availableDenominations

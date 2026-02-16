@@ -3,8 +3,8 @@ package atm.application
 
 import atm.application.AtmApplicationService.DispenseError
 import atm.application.AtmApplicationService.DispenseError.{
-  InsufficientCash,
   InsufficientFunds,
+  InventoryShortage,
   RefundedError,
 }
 import atm.domain.model.types.{TransactionId, TransactionState}
@@ -107,7 +107,7 @@ object AtmApplicationService:
           self.calculateWithdrawal(amount, inventory)
         .rescue:
           case DenominationSolver.Error.NotSolved =>
-            InsufficientCash(inventory.availableDenominations)
+            InventoryShortage(inventory.availableDenominations)
               .raise[F, Map[Denomination, Quantity]]
 
   extension [F[_]: Async](self: AccountRepository[F])
@@ -168,10 +168,10 @@ object AtmApplicationService:
       with NoStackTrace
 
   object DispenseError:
-    case class InsufficientCash(
+    case object InsufficientFunds extends DispenseError("Insufficient funds in account")
+
+    case class InventoryShortage(
         availableDenominations: Set[Denomination],
     ) extends DispenseError("Out of money")
-
-    case object InsufficientFunds extends DispenseError("Insufficient funds in account")
 
     case object RefundedError extends DispenseError("Internal error")
