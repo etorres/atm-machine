@@ -40,7 +40,6 @@ lazy val withBaseSettings: Project => Project =
     Test / envVars := Map(
       "SBT_TEST_ENV_VARS" -> "true",
     ),
-    Test / testFrameworks += MUnitFramework,
     Test / testOptions += Tests.Argument(MUnitFramework, "--exclude-tags=online"),
     Test / logBuffered := false,
   )
