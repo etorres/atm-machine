@@ -52,7 +52,7 @@ object AccountRepositoryStub:
   final case class AccountRepositoryState(
       value: Accounts,
   ) extends InMemoryState[AccountRepositoryState, Accounts]:
-    def set(
+    override def set(
         newValue: Accounts,
     ): AccountRepositoryState =
       copy(newValue)

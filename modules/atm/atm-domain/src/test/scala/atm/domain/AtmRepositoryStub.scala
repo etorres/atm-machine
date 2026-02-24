@@ -54,7 +54,7 @@ object AtmRepositoryStub:
   final case class AtmRepositoryState(
       value: CurrencyToCash,
   ) extends InMemoryState[AtmRepositoryState, CurrencyToCash]:
-    def set(
+    override def set(
         newValue: CurrencyToCash,
     ): AtmRepositoryState =
       copy(newValue)

@@ -30,7 +30,7 @@ object AccountRepository:
       .flatTap: mapRef =>
         initial.toList.traverse:
           case (accountId, balance) =>
-            mapRef(accountId).update(_ => Some(balance))
+            mapRef(accountId).update(_ => balance.some)
       .map: mapRef =>
         InMemory[F](mapRef)
 
@@ -61,6 +61,6 @@ object AccountRepository:
     ): F[Unit] =
       mapRef(accountId).update: maybeBalance =>
         maybeBalance
-          .orElse(Some(BigDecimal(0)))
+          .orElse(BigDecimal(0).some)
           .map: currentBalance =>
             currentBalance + amount

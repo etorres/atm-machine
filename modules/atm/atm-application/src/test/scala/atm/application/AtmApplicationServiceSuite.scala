@@ -33,7 +33,7 @@ final class AtmApplicationServiceSuite extends AtmTestRunner with AtmGenerators 
         .mapOrFail:
           case (Left(error: DispenseError.InsufficientFunds.type), finalState) => finalState
         .map:
-          verifyFundsUnchanged(accountId, money, initialState, _)
+          verifyFundsUnchanged(accountId, money, initialState, _, none[TransactionState])
 
   test("should return an error when the ATM does not have enough money"):
     forAllF(outOfMoneyTestCaseGen):
@@ -49,7 +49,7 @@ final class AtmApplicationServiceSuite extends AtmTestRunner with AtmGenerators 
             (availableDenominations, finalDenominations, finalState)
         .map: (availableDenominations, finalDenominations, finalState) =>
           assert(finalDenominations == availableDenominations, "Available denominations")
-          verifyFundsUnchanged(accountId, money, initialState, finalState)
+          verifyFundsUnchanged(accountId, money, initialState, finalState, none[TransactionState])
 
   test("should refund withdrawn money if cash inventory update fails"):
     forAllF(withdrawalTestCaseGen):

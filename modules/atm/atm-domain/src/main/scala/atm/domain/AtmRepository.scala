@@ -26,7 +26,7 @@ object AtmRepository:
       .flatTap: mapRef =>
         initial.toList.traverse:
           case (currency, availabilities) =>
-            mapRef(currency).update(_ => Some(availabilities))
+            mapRef(currency).update(_ => availabilities.some)
       .map: mapRef =>
         InMemory[F](mapRef)
 

@@ -24,7 +24,7 @@ object DeterministicUUIDGen:
   final case class UUIDGenState(
       value: List[UUID],
   ) extends InMemoryState[UUIDGenState, List[UUID]]:
-    def set(
+    override def set(
         newValue: List[UUID],
     ): UUIDGenState =
       copy(newValue)

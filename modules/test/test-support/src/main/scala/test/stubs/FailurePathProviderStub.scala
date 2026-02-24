@@ -11,10 +11,10 @@ trait FailurePathProviderStub[State <: InMemoryState[State, A], A]
     extends SuccessPathProviderStub[State, A]:
   protected val failureRateRef: Ref[IO, FailureRate]
 
-  def setFailureRate(newFailureRate: FailureRate): IO[Unit] =
+  final def setFailureRate(newFailureRate: FailureRate): IO[Unit] =
     failureRateRef.set(newFailureRate)
 
-  protected def attemptOrRaise[B, E](
+  final protected def attemptOrRaise[B, E](
       onSuccess: IO[B],
       onFailure: E,
   )(using
@@ -28,7 +28,7 @@ trait FailurePathProviderStub[State <: InMemoryState[State, A], A]
           ifFalse = onSuccess,
         )
 
-  protected def attemptOrRaiseError[B, E <: Throwable](
+  final protected def attemptOrRaiseError[B, E <: Throwable](
       onSuccess: IO[B],
       onFailure: E,
   )(using

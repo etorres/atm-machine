@@ -10,7 +10,7 @@ import cats.implicits.*
 import squants.market.Currency
 
 trait AtmTestAudit:
-  def verifyFundsInvariants(
+  final def verifyFundsInvariants(
       accountId: AccountId,
       money: Money,
       initialState: StubStates,
@@ -43,12 +43,12 @@ trait AtmTestAudit:
       ),
     )
 
-  def verifyFundsUnchanged(
+  final def verifyFundsUnchanged(
       accountId: AccountId,
       money: Money,
       initialState: StubStates,
       finalState: StubStates,
-      maybeFinalTransactionState: Option[TransactionState] = None,
+      maybeFinalTransactionState: Option[TransactionState],
   ): Unit =
     val initialBalance = balanceFrom(accountId, initialState)
     val finalBalance = balanceFrom(accountId, finalState)
@@ -71,7 +71,7 @@ trait AtmTestAudit:
       List(TransactionState.Completed),
     )
 
-  def verifyFundsInconsistency(
+  final def verifyFundsInconsistency(
       accountId: AccountId,
       money: Money,
       initialState: StubStates,
@@ -99,7 +99,7 @@ trait AtmTestAudit:
       List(TransactionState.Refunded, TransactionState.Completed),
     )
 
-  def verifyCashInconsistency(
+  final def verifyCashInconsistency(
       accountId: AccountId,
       money: Money,
       initialState: StubStates,

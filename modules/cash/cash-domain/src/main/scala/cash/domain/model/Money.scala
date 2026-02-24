@@ -20,5 +20,5 @@ object Money:
   object Amount extends RefinedSubtype[Int, Positive]
 
   given Show[Currency] with
-    def show(currency: Currency): String =
+    override def show(currency: Currency): String =
       currency.code

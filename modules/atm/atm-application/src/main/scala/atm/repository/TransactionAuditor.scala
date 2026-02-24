@@ -23,7 +23,7 @@ trait TransactionAuditor[F[_]: Async]:
       at: Instant,
   ): F[Unit]
 
-  def startTransaction(
+  final def startTransaction(
       accountId: AccountId,
       money: Money,
   )(using clock: Clock[F], uuidGen: UUIDGen[F]): F[ActiveTransaction[F]] =

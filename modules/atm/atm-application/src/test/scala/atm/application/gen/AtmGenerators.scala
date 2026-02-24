@@ -120,7 +120,7 @@ trait AtmGenerators:
       accountId,
       money,
       initialState,
-      Some(expectedReceipt),
+      expectedReceipt.some,
     )
 
   val insufficientFundsTestCaseGen: Gen[TestCase] =

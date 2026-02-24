@@ -17,19 +17,29 @@ addCommandAlias(
   "; undeclaredCompileDependenciesTest; unusedCompileDependenciesTest; scalafixAll; scalafmtSbtCheck; scalafmtCheckAll",
 )
 
-lazy val MUnitFramework = new TestFramework("munit.Framework")
-lazy val warts = Warts.unsafe.filter(_ != Wart.DefaultArguments)
+lazy val contribWarts = Seq(
+  ContribWart.MissingOverride,
+  ContribWart.OldTime,
+  ContribWart.SomeApply,
+  ContribWart.UnsafeInheritance,
+)
+lazy val warts = Warts.unsafe.filter(_ != Wart.DefaultArguments) ++ contribWarts
 
 lazy val withBaseSettings: Project => Project =
   _.settings(
-    run / javaOptions += "--enable-native-access=ALL-UNNAMED",
-    Test / javaOptions += "--enable-native-access=ALL-UNNAMED",
+    run / javaOptions ++= Seq(
+      "--sun-misc-unsafe-memory-access=allow",
+      "--enable-native-access=ALL-UNNAMED",
+    ),
+    Test / javaOptions ++= Seq(
+      "--sun-misc-unsafe-memory-access=allow",
+      "--enable-native-access=ALL-UNNAMED",
+    ),
     tpolecatDevModeOptions ++= Set(
-      org.typelevel.scalacoptions.ScalacOptions
-        .other("-java-output-version", List("25"), _ => true),
-      org.typelevel.scalacoptions.ScalacOptions.other("-Werror", Nil, _ => true),
-      org.typelevel.scalacoptions.ScalacOptions.warnOption("safe-init"),
-      org.typelevel.scalacoptions.ScalacOptions.privateOption("explicit-nulls"),
+      org.typelevel.scalacoptions.ScalacOptions.javaOutputVersion("25"),
+      org.typelevel.scalacoptions.ScalacOptions.warnError,
+      org.typelevel.scalacoptions.ScalacOptions.warnSafeInit,
+      org.typelevel.scalacoptions.ScalacOptions.privateExplicitNulls,
     ),
     tpolecatExcludeOptions ++= Set(
       org.typelevel.scalacoptions.ScalacOptions.fatalWarnings,
@@ -40,7 +50,8 @@ lazy val withBaseSettings: Project => Project =
     Test / envVars := Map(
       "SBT_TEST_ENV_VARS" -> "true",
     ),
-    Test / testOptions += Tests.Argument(MUnitFramework, "--exclude-tags=online"),
+    testFrameworks += TestFrameworks.MUnit,
+    Test / testOptions += Tests.Argument(TestFrameworks.MUnit, "--exclude-tags=online"),
     Test / logBuffered := false,
   )
 
@@ -128,6 +139,10 @@ lazy val atmInfrastructure =
         "io.circe" %% "circe-parser" % "0.14.15",
         "io.github.iltotore" %% "iron" % "3.3.0",
         "io.github.iltotore" %% "iron-circe" % "3.3.0",
+        "org.tpolecat" %% "doobie-core" % "1.0.0-RC12",
+        "org.tpolecat" %% "doobie-free" % "1.0.0-RC12",
+        "org.tpolecat" %% "doobie-h2" % "1.0.0-RC12",
+        "org.tpolecat" %% "typename" % "1.1.0",
         "org.typelevel" %% "cats-core" % "2.13.0",
         "org.typelevel" %% "cats-effect" % "3.6.3",
         "org.typelevel" %% "cats-effect-kernel" % "3.6.3",
@@ -135,10 +150,6 @@ lazy val atmInfrastructure =
         "org.typelevel" %% "cats-free" % "2.13.0",
         "org.typelevel" %% "cats-mtl" % "1.6.0",
         "org.typelevel" %% "squants" % "1.8.3",
-        "org.tpolecat" %% "doobie-core" % "1.0.0-RC11",
-        "org.tpolecat" %% "doobie-free" % "1.0.0-RC11",
-        "org.tpolecat" %% "doobie-h2" % "1.0.0-RC11",
-        "org.tpolecat" %% "typename" % "1.1.0",
       ),
     )
     .dependsOn(atmApplication % "compile->compile;test->test")

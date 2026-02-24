@@ -31,7 +31,7 @@ object DeterministicClock:
   final case class ClockState(
       value: List[Instant],
   ) extends InMemoryState[ClockState, List[Instant]]:
-    def set(
+    override def set(
         newValue: List[Instant],
     ): ClockState =
       copy(newValue)

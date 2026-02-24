@@ -30,7 +30,7 @@ object PhysicalDispenserStub:
   final case class PhysicalDispenserState(
       value: DispensedNotes,
   ) extends InMemoryState[PhysicalDispenserState, DispensedNotes]:
-    def set(newValue: DispensedNotes): PhysicalDispenserState =
+    override def set(newValue: DispensedNotes): PhysicalDispenserState =
       copy(newValue)
 
   object PhysicalDispenserState:

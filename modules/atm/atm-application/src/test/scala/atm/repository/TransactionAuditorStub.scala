@@ -54,7 +54,7 @@ object TransactionAuditorStub:
   final case class TransactionAuditorState(
       value: List[AuditEntry],
   ) extends InMemoryState[TransactionAuditorState, List[AuditEntry]]:
-    def set(
+    override def set(
         newValue: List[AuditEntry],
     ): TransactionAuditorState =
       copy(newValue)

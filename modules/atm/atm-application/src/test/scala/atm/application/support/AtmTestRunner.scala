@@ -30,7 +30,7 @@ import org.typelevel.log4cats.noop.NoOpLogger
 import scala.reflect.ClassTag
 
 abstract class AtmTestRunner extends CatsEffectSuite with ScalaCheckEffectSuite:
-  def withService[R, E <: Throwable: ClassTag](
+  final def withService[R, E <: Throwable: ClassTag](
       terminalId: TerminalId,
       initialState: StubStates,
   )(
